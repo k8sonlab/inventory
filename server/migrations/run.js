@@ -65,6 +65,7 @@ async function runMigrations() {
           quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
@@ -138,6 +139,7 @@ async function runMigrations() {
           quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,

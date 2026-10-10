@@ -18,6 +18,10 @@ export class Item {
     const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
     const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
 
+    if (filters.category_id) {
+      sql += ` AND i.category_id = ${ph()}`;
+      params.push(filters.category_id);
+    }
     if (filters.box_id) {
       sql += ` AND i.box_id = ${ph()}`;
       params.push(filters.box_id);
@@ -227,6 +231,10 @@ export class RCPart {
     const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
     const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
 
+    if (filters.category_id) {
+      sql += ` AND r.category_id = ${ph()}`;
+      params.push(filters.category_id);
+    }
     if (filters.box_id) {
       sql += ` AND r.box_id = ${ph()}`;
       params.push(filters.box_id);
@@ -256,35 +264,35 @@ export class RCPart {
 
   static async create(data) {
     const id = uuidv4();
-    const { company, model, item_code, box_id, quantity, notes } = data;
+    const { company, model, item_code, box_id, category_id, quantity, notes } = data;
     const now = NOW();
     
-    let sql = `INSERT INTO rc_parts (id, company, model, item_code, box_id, quantity, notes, created_at, updated_at)
+    let sql = `INSERT INTO rc_parts (id, company, model, item_code, box_id, category_id, quantity, notes, created_at, updated_at)
        VALUES (`;
     
     if (isPostgresDB()) {
-      sql += `$1, $2, $3, $4, $5, $6, $7, ${now}, ${now})`;
+      sql += `$1, $2, $3, $4, $5, $6, $7, $8, ${now}, ${now})`;
     } else {
-      sql += `?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
+      sql += `?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, company || null, model || null, item_code, box_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, company || null, model || null, item_code, box_id || null, category_id || null, quantity || 0, notes || null]);
     return await RCPart.getById(id);
   }
 
   static async update(id, data) {
-    const { company, model, item_code, box_id, quantity, notes } = data;
+    const { company, model, item_code, box_id, category_id, quantity, notes } = data;
     const now = NOW();
     
     let sql = `UPDATE rc_parts SET company = `;
     
     if (isPostgresDB()) {
-      sql += `$1, model = $2, item_code = $3, box_id = $4, quantity = $5, notes = $6, updated_at = ${now} WHERE id = $7`;
+      sql += `$1, model = $2, item_code = $3, box_id = $4, category_id = $5, quantity = $6, notes = $7, updated_at = ${now} WHERE id = $8`;
     } else {
-      sql += `?, model = ?, item_code = ?, box_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
+      sql += `?, model = ?, item_code = ?, box_id = ?, category_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [company || null, model || null, item_code, box_id || null, quantity, notes || null, id]);
+    await exec(sql, [company || null, model || null, item_code, box_id || null, category_id || null, quantity, notes || null, id]);
     return await RCPart.getById(id);
   }
 

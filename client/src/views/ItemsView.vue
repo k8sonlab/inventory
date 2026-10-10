@@ -137,8 +137,14 @@
           </div>
 
           <div class="form-group">
-            <label>Item Name *</label>
-            <input v-model="formData.name" type="text" placeholder="Item name" required />
+            <label>Category</label>
+            <select v-model="formData.category_id">
+              <option value="">-- No Category --</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
           </div>
           
           <div class="form-group">
@@ -269,6 +275,7 @@ export default {
     const formData = ref({
       name: '',
       item_type: '',
+      category_id: '',
       box_id: '',
       quantity: 0,
       notes: '',
@@ -369,6 +376,7 @@ export default {
       formData.value = {
         name: '',
         item_type: '',
+        category_id: '',
         box_id: '',
         quantity: 0,
         notes: '',
@@ -495,7 +503,7 @@ export default {
       formData.value = {
         name: item.name,
         item_type: item.item_type || '',
-
+        category_id: item.category_id || '',
         box_id: item.box_id || '',
         quantity: item.quantity || 0,
         notes: item.notes || '',
@@ -538,11 +546,9 @@ export default {
     });
 
     watch(() => props.selectedCategory, (newVal) => {
-      if (newVal !== null) {
-        filterCategory.value = newVal;
-        currentPage.value = 1;
-        loadItems();
-      }
+      filterCategory.value = newVal || '';
+      currentPage.value = 1;
+      loadItems();
     });
 
     watch(() => searchQuery.value, () => {
