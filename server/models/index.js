@@ -18,7 +18,7 @@ export class Item {
     const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
     const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
 
-    if (filters.category_id) {
+    if (filters.category_id && filters.category_id !== '') {
       sql += ` AND i.category_id = ${ph()}`;
       params.push(filters.category_id);
     }
@@ -231,7 +231,7 @@ export class RCPart {
     const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
     const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
 
-    if (filters.category_id) {
+    if (filters.category_id && filters.category_id !== '') {
       sql += ` AND r.category_id = ${ph()}`;
       params.push(filters.category_id);
     }

@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const filters = {
-      location_id: req.query.location_id,
+      category_id: req.query.category_id,
       search: req.query.search,
     };
     const items = await RCPart.getAllCombined(filters);

@@ -1,6 +1,6 @@
 import XLSX from 'xlsx';
-import { initializeDatabase, closeDatabase, isPostgresDB } from '../db.js';
-import { Shelf, Box, Category, Item, CatalogEnum } from '../models/index.js';
+import { initializeDatabase, closeDatabase, isPostgresDB, query, exec } from '../db.js';
+import { Shelf, Box, Category, Item, RCPart, CatalogEnum } from '../models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -108,7 +108,34 @@ async function importExcelData() {
       }
     }
 
-    // 4. Create Categories
+    // 4. Migrate any legacy RC Parts already sitting in items table
+    console.log('\n🧹 Checking for legacy RC Part rows...');
+    const legacyRcItems = await query(`SELECT * FROM items WHERE item_type = 'RC Parts'`);
+
+    for (const row of legacyRcItems) {
+      const params = typeof row.parameters === 'string' ? JSON.parse(row.parameters || '{}') : (row.parameters || {});
+      const company = params.company || row.name || '';
+      const model = params.model || '';
+      const itemCode = params.item_code || row.name || '';
+
+      if (itemCode) {
+        await RCPart.create({
+          company,
+          model,
+          item_code: itemCode,
+          box_id: row.box_id,
+          category_id: row.category_id,
+          quantity: row.quantity || 0,
+          notes: row.notes || ''
+        });
+
+        await exec(`DELETE FROM items WHERE id = ${isPostgresDB() ? '$1' : '?'}`, [row.id]);
+      }
+    }
+
+    console.log(`  ✓ Migrated ${legacyRcItems.length} legacy RC Part rows`);
+
+    // 5. Create Categories
     console.log('\n📂 Creating Item Categories...');
     const categories = ['Screws', 'Nuts', 'Bearings', 'Other Items', 'RC Parts', 'Oils/Pastes', 'Batteries'];
     const categoryMap = {};
@@ -119,7 +146,7 @@ async function importExcelData() {
       console.log(`  ✓ ${catName}`);
     }
 
-    // 5. Import Screws
+    // 6. Import Screws
     console.log('\n🔩 Importing Screws...');
     const screwsSheet = workbook.Sheets['Screws'];
     const screwsData = XLSX.utils.sheet_to_json(screwsSheet);
@@ -227,29 +254,26 @@ async function importExcelData() {
     }
     console.log(`  ✓ Imported ${otherData.length} other items`);
 
-    // 9. Import RC Parts
+    // 9. Import RC Parts into the dedicated rc_parts table
     console.log('\n🏎️  Importing RC Parts...');
     const rcSheet = workbook.Sheets['RC Parts'];
     const rcData = XLSX.utils.sheet_to_json(rcSheet);
     
     for (const row of rcData) {
-      if (!row['Storage ID'] || !row['Part Number / Title']) continue;
+      const itemCode = row['Part Number / Title'] || row['Item Code'] || row['Part Number'] || '';
+      if (!row['Storage ID'] || !itemCode) continue;
       
       const boxId = boxMap[row['Storage ID']];
       if (!boxId) continue;
       
-      await Item.create({
-        name: row['Part Number / Title'],
-        item_type: 'RC Parts',
+      await RCPart.create({
+        company: row['Company'] || '',
+        model: row['Model'] || '',
+        item_code: itemCode,
         category_id: categoryMap['RC Parts'],
         box_id: boxId,
         quantity: row['Amount'] || 0,
-        notes: row['Notes'] || '',
-        parameters: {
-          company: row['Company'],
-          model: row['Model'],
-          part_type: row['Item Type']
-        }
+        notes: row['Notes'] || ''
       });
     }
     console.log(`  ✓ Imported ${rcData.length} RC parts`);

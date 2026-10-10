@@ -49,9 +49,9 @@ export default {
     };
     
     const parseHash = () => {
-      const hash = window.location.hash.slice(1); // Remove #
+      const hash = window.location.hash.replace(/^#\/?/, '');
       if (!hash) return { view: 'items', categoryId: null };
-      
+
       if (hash.startsWith('manage')) {
         return { view: 'manage', categoryId: null };
       } else if (hash.startsWith('items/')) {

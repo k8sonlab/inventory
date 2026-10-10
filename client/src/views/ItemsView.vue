@@ -145,6 +145,10 @@
               </option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label>Item Name *</label>
+            <input v-model="formData.name" type="text" placeholder="Item name" required />
           </div>
           
           <div class="form-group">
@@ -541,6 +545,8 @@ export default {
     };
 
     onMounted(() => {
+      // Initialize filterCategory from selectedCategory prop
+      filterCategory.value = props.selectedCategory || '';
       loadItems();
       loadCategories();
     });
