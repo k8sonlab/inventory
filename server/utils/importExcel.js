@@ -1,6 +1,6 @@
 import XLSX from 'xlsx';
 import { initializeDatabase, closeDatabase, isPostgresDB, query, exec } from '../db.js';
-import { Shelf, Box, Category, Item, RCPart, CatalogEnum } from '../models/index.js';
+import { Shelf, Box, Category, Item, RCPart, Screw, CatalogEnum } from '../models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -81,6 +81,9 @@ async function importExcelData() {
           'Head Types': 'screw_head_type',
           'Drive Types': 'screw_drive_type',
           'Thread Types': 'screw_thread_type',
+          'Screw Colors': 'screw_color',
+          'Screw Materials': 'screw_material',
+          'Screw Sizes': 'screw_size',
           'Nut type': 'nut_type',
           'Color': 'nut_color',
           'Item Type': 'other_item_type',
@@ -149,30 +152,80 @@ async function importExcelData() {
     // 6. Import Screws
     console.log('\n🔩 Importing Screws...');
     const screwsSheet = workbook.Sheets['Screws'];
-    const screwsData = XLSX.utils.sheet_to_json(screwsSheet);
-    
-    for (const row of screwsData) {
-      if (!row['Storage ID'] || !row['Size']) continue;
+    if (!screwsSheet) {
+      console.log('  ⚠️  "Screws" sheet not found');
+    } else {
+      const screwsData = XLSX.utils.sheet_to_json(screwsSheet);
+      let screwCount = 0;
       
-      const boxId = boxMap[row['Storage ID']];
-      if (!boxId) continue;
+      // Extract unique enum values from screws data
+      const uniqueSizes = new Set();
+      const uniqueHeadTypes = new Set();
+      const uniqueDriveTypes = new Set();
+      const uniqueThreadTypes = new Set();
+      const uniqueColors = new Set();
+      const uniqueMaterials = new Set();
       
-      await Item.create({
-        name: `${row['Size']} x ${row['Length']}mm ${row['Head Type']} ${row['Drive Type']}`,
-        item_type: 'Screws',
-        category_id: categoryMap['Screws'],
-        box_id: boxId,
-        quantity: row['Amount'] || 0,
-        parameters: {
-          size: row['Size'],
-          length: row['Length'],
-          head_type: row['Head Type'],
-          drive_type: row['Drive Type'],
-          thread_type: row['Thread Type']
-        }
-      });
+      for (const row of screwsData) {
+        if (row['Size']) uniqueSizes.add(row['Size']);
+        if (row['Head Type']) uniqueHeadTypes.add(row['Head Type']);
+        if (row['Drive Type']) uniqueDriveTypes.add(row['Drive Type']);
+        if (row['Thread Type']) uniqueThreadTypes.add(row['Thread Type']);
+        if (row['Color']) uniqueColors.add(row['Color']);
+        if (row['Material']) uniqueMaterials.add(row['Material']);
+      }
+      
+      // Create enums from extracted values
+      for (const size of uniqueSizes) {
+        await CatalogEnum.create('screw_size', size);
+      }
+      for (const headType of uniqueHeadTypes) {
+        await CatalogEnum.create('screw_head_type', headType);
+      }
+      for (const driveType of uniqueDriveTypes) {
+        await CatalogEnum.create('screw_drive_type', driveType);
+      }
+      for (const threadType of uniqueThreadTypes) {
+        await CatalogEnum.create('screw_thread_type', threadType);
+      }
+      for (const color of uniqueColors) {
+        await CatalogEnum.create('screw_color', color);
+      }
+      for (const material of uniqueMaterials) {
+        await CatalogEnum.create('screw_material', material);
+      }
+      
+      if (uniqueSizes.size > 0) console.log(`  ✓ Screw sizes: ${uniqueSizes.size} values`);
+      if (uniqueHeadTypes.size > 0) console.log(`  ✓ Head types: ${uniqueHeadTypes.size} values`);
+      if (uniqueDriveTypes.size > 0) console.log(`  ✓ Drive types: ${uniqueDriveTypes.size} values`);
+      if (uniqueThreadTypes.size > 0) console.log(`  ✓ Thread types: ${uniqueThreadTypes.size} values`);
+      if (uniqueColors.size > 0) console.log(`  ✓ Colors: ${uniqueColors.size} values`);
+      if (uniqueMaterials.size > 0) console.log(`  ✓ Materials: ${uniqueMaterials.size} values`);
+      
+      for (const row of screwsData) {
+        if (!row['Storage ID'] || !row['Size']) continue;
+        
+        const boxId = boxMap[row['Storage ID']];
+        if (!boxId) continue;
+        
+        await Screw.create({
+          name: `${row['Size']} x ${row['Length']}mm ${row['Head Type']} ${row['Drive Type']}`,
+          size: row['Size'] || '',
+          length: row['Length'] || '',
+          head_type: row['Head Type'] || '',
+          drive_type: row['Drive Type'] || '',
+          thread_type: row['Thread Type'] || '',
+          color: row['Color'] || '',
+          material: row['Material'] || '',
+          box_id: boxId,
+          category_id: categoryMap['Screws'],
+          quantity: row['Amount'] || 0,
+          notes: row['Notes'] || ''
+        });
+        screwCount++;
+      }
+      console.log(`  ✓ Imported ${screwCount} screw entries`);
     }
-    console.log(`  ✓ Imported ${screwsData.length} screw entries`);
 
     // 6. Import Nuts
     console.log('\n⚙️  Importing Nuts...');

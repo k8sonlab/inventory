@@ -1,5 +1,5 @@
 import express from 'express';
-import { Item, RCPart } from '../models/index.js';
+import { Item, RCPart, Screw } from '../models/index.js';
 
 const router = express.Router();
 
@@ -33,9 +33,14 @@ router.get('/:id', async (req, res) => {
 // Create item
 router.post('/', async (req, res) => {
   try {
-    const item = req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts' 
-      ? await RCPart.create(req.body)
-      : await Item.create(req.body);
+    let item;
+    if (req.body.source_type === 'screw' || req.body.item_type === 'Screws') {
+      item = await Screw.create(req.body);
+    } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
+      item = await RCPart.create(req.body);
+    } else {
+      item = await Item.create(req.body);
+    }
     res.status(201).json(item);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -45,9 +50,14 @@ router.post('/', async (req, res) => {
 // Update item
 router.put('/:id', async (req, res) => {
   try {
-    const item = req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts' 
-      ? await RCPart.update(req.params.id, req.body)
-      : await Item.update(req.params.id, req.body);
+    let item;
+    if (req.body.source_type === 'screw' || req.body.item_type === 'Screws') {
+      item = await Screw.update(req.params.id, req.body);
+    } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
+      item = await RCPart.update(req.params.id, req.body);
+    } else {
+      item = await Item.update(req.params.id, req.body);
+    }
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
     }
@@ -60,9 +70,14 @@ router.put('/:id', async (req, res) => {
 // Delete item
 router.delete('/:id', async (req, res) => {
   try {
-    const item = req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts'
-      ? await RCPart.delete(req.params.id)
-      : await Item.delete(req.params.id);
+    let item;
+    if (req.body.source_type === 'screw' || req.body.item_type === 'Screws') {
+      item = await Screw.delete(req.params.id);
+    } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
+      item = await RCPart.delete(req.params.id);
+    } else {
+      item = await Item.delete(req.params.id);
+    }
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
     }

@@ -1,7 +1,47 @@
 <template>
   <div class="manage-view">
+    <div class="manage-section">      <h2>🏎️ RC Parts Fields</h2>
+      <div class="manage-form">
+        <select v-model="selectedRCFieldType" placeholder="Select RC field">
+          <option value="">-- Select RC Field --</option>
+          <option value="rc_company">RC Company</option>
+          <option value="rc_model">RC Model</option>
+        </select>
+        <input v-model="newRCFieldValue" placeholder="New value" />
+        <button @click="addRCFieldValue" class="btn-primary" :disabled="!selectedRCFieldType || !newRCFieldValue">Add Value</button>
+      </div>
+      <div v-if="selectedRCFieldType" class="manage-list">
+        <div v-if="rcFieldValuesList.length === 0" class="empty-state">No values for this field</div>
+        <div v-for="value in rcFieldValuesList" :key="value" class="manage-item">
+          <span>{{ value }}</span>
+          <button @click="deleteRCFieldValue(value)" class="btn-danger btn-small">Delete</button>
+        </div>
+      </div>
+    </div>
     <div class="manage-section">
-      <h2>� Parameter Options</h2>
+      <h2>🔩 Screw Fields</h2>
+      <div class="manage-form">
+        <select v-model="selectedScrewFieldType" placeholder="Select screw field">
+          <option value="">-- Select Screw Field --</option>
+          <option value="screw_size">Size</option>
+          <option value="screw_head_type">Head Type</option>
+          <option value="screw_drive_type">Drive Type</option>
+          <option value="screw_thread_type">Thread Type</option>
+          <option value="screw_color">Color</option>
+          <option value="screw_material">Material</option>
+        </select>
+        <input v-model="newScrewFieldValue" placeholder="New value" />
+        <button @click="addScrewFieldValue" class="btn-primary" :disabled="!selectedScrewFieldType || !newScrewFieldValue">Add Value</button>
+      </div>
+      <div v-if="selectedScrewFieldType" class="manage-list">
+        <div v-if="screwFieldValuesList.length === 0" class="empty-state">No values for this field</div>
+        <div v-for="value in screwFieldValuesList" :key="value" class="manage-item">
+          <span>{{ value }}</span>
+          <button @click="deleteScrewFieldValue(value)" class="btn-danger btn-small">Delete</button>
+        </div>
+      </div>
+    </div>
+    <div class="manage-section">      <h2>� Parameter Options</h2>
       <div class="manage-form">
         <select v-model="selectedEnumType" placeholder="Select parameter type">
           <option value="">-- Select Parameter Type --</option>
@@ -11,8 +51,6 @@
           <option value="nut_type">Nut Type</option>
           <option value="nut_color">Nut Color</option>
           <option value="bearing_sealing_type">Bearing Sealing Type</option>
-          <option value="rc_company">RC Company</option>
-          <option value="rc_model">RC Model</option>
           <option value="oil_paste_company">Oil/Paste Company</option>
           <option value="oil_paste_type">Oil/Paste Type</option>
           <option value="battery_type">Battery Type</option>
@@ -107,6 +145,12 @@ export default {
     const selectedEnumType = ref('');
     const newEnumValue = ref('');
     const enumValuesList = ref([]);
+    const selectedRCFieldType = ref('');
+    const newRCFieldValue = ref('');
+    const rcFieldValuesList = ref([]);
+    const selectedScrewFieldType = ref('');
+    const newScrewFieldValue = ref('');
+    const screwFieldValuesList = ref([]);
 
     const loadCategories = async () => {
       try {
@@ -239,9 +283,87 @@ export default {
       }
     };
 
+    const loadRCFieldValues = async () => {
+      if (selectedRCFieldType.value) {
+        try {
+          const response = await enumsService.getValues(selectedRCFieldType.value);
+          rcFieldValuesList.value = response.data || [];
+        } catch (error) {
+          console.error('Error loading RC field values:', error);
+        }
+      }
+    };
+
+    const addRCFieldValue = async () => {
+      if (!selectedRCFieldType.value || !newRCFieldValue.value.trim()) return;
+      try {
+        await enumsService.createValue(selectedRCFieldType.value, newRCFieldValue.value);
+        newRCFieldValue.value = '';
+        loadRCFieldValues();
+      } catch (error) {
+        console.error('Error adding RC field value:', error);
+        alert('Error adding value: ' + error.message);
+      }
+    };
+
+    const deleteRCFieldValue = async (value) => {
+      if (confirm('Delete this value?')) {
+        try {
+          await enumsService.deleteValue(selectedRCFieldType.value, value);
+          loadRCFieldValues();
+        } catch (error) {
+          console.error('Error deleting RC field value:', error);
+          alert('Error deleting value: ' + error.message);
+        }
+      }
+    };
+
     watch(() => selectedEnumType.value, () => {
       loadEnumValues();
     });
+
+    watch(() => selectedRCFieldType.value, () => {
+      loadRCFieldValues();
+    });
+
+    watch(() => selectedScrewFieldType.value, () => {
+      loadScrewFieldValues();
+    });
+
+    const loadScrewFieldValues = async () => {
+      if (selectedScrewFieldType.value) {
+        try {
+          const response = await enumsService.getValues(selectedScrewFieldType.value);
+          screwFieldValuesList.value = response.data || [];
+        } catch (error) {
+          console.error('Error loading screw field values:', error);
+        }
+      }
+    };
+
+    const addScrewFieldValue = async () => {
+      if (!selectedScrewFieldType.value || !newScrewFieldValue.value.trim()) return;
+      try {
+        await enumsService.createValue(selectedScrewFieldType.value, newScrewFieldValue.value);
+        newScrewFieldValue.value = '';
+        loadScrewFieldValues();
+      } catch (error) {
+        console.error('Error adding screw field value:', error);
+        alert('Error adding value: ' + error.message);
+      }
+    };
+
+    const deleteScrewFieldValue = async (value) => {
+      if (confirm('Delete this value?')) {
+        try {
+          await enumsService.deleteValue(selectedScrewFieldType.value, value);
+          loadScrewFieldValues();
+        } catch (error) {
+          console.error('Error deleting screw field value:', error);
+          alert('Error deleting value: ' + error.message);
+        }
+      }
+    };
 
     onMounted(() => {
       loadCategories();
@@ -259,13 +381,23 @@ export default {
       selectedEnumType,
       newEnumValue,
       enumValuesList,
+      selectedRCFieldType,
+      newRCFieldValue,
+      rcFieldValuesList,
+      selectedScrewFieldType,
+      newScrewFieldValue,
+      screwFieldValuesList,
       addCategory,
       deleteCategory,
       addShelf,
       addBox,
       deleteBox,
       addEnumValue,
-      deleteEnumValue
+      deleteEnumValue,
+      addRCFieldValue,
+      deleteRCFieldValue,
+      addScrewFieldValue,
+      deleteScrewFieldValue
     };
   }
 };

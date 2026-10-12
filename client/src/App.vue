@@ -1,7 +1,10 @@
 <template>
   <div class="inventory-app">
     <header>
-      <h1>📦 Inventory Manager</h1>
+      <div class="header-row">
+        <h1>📦 Inventory Manager</h1>
+        <span class="app-version">v{{ appVersion }}</span>
+      </div>
       <nav>
         <button @click="navigateTo('items')" :class="{ active: currentView === 'items' && selectedCategory === null }">Items</button>
         <button v-for="cat in categories" :key="cat.id" @click="navigateTo('items', cat.id)" :class="{ active: currentView === 'items' && selectedCategory === cat.id }" class="category-btn">
@@ -30,6 +33,7 @@ export default {
     ManageView
   },
   setup() {
+    const appVersion = '1.0.0';
     const currentView = ref('items');
     const categories = ref([]);
     const selectedCategory = ref(null);
@@ -115,6 +119,7 @@ export default {
     });
     
     return {
+      appVersion,
       currentView,
       categories,
       selectedCategory,
@@ -137,9 +142,27 @@ header {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 header h1 {
   margin: 0 0 1rem 0;
   font-size: 1.8rem;
+}
+
+.app-version {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ecf0f1;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 nav button {

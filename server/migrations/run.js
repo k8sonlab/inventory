@@ -59,9 +59,28 @@ async function runMigrations() {
         
         `CREATE TABLE IF NOT EXISTS rc_parts (
           id UUID PRIMARY KEY,
+          name VARCHAR(255),
           company VARCHAR(255),
           model VARCHAR(255),
           item_code VARCHAR(255) NOT NULL,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
+        `CREATE TABLE IF NOT EXISTS screws (
+          id UUID PRIMARY KEY,
+          name VARCHAR(255),
+          size VARCHAR(255),
+          length VARCHAR(255),
+          head_type VARCHAR(255),
+          drive_type VARCHAR(255),
+          thread_type VARCHAR(255),
+          color VARCHAR(255),
+          material VARCHAR(255),
           quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
@@ -78,7 +97,10 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_catalog_type ON catalog_enums(enum_type)`,
         `CREATE INDEX IF NOT EXISTS idx_rc_parts_box ON rc_parts(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_rc_parts_company ON rc_parts(company)`,
-        `CREATE INDEX IF NOT EXISTS idx_rc_parts_item_code ON rc_parts(item_code)`
+        `CREATE INDEX IF NOT EXISTS idx_rc_parts_item_code ON rc_parts(item_code)`,
+        `CREATE INDEX IF NOT EXISTS idx_screws_box ON screws(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_screws_size ON screws(size)`,
+        `CREATE INDEX IF NOT EXISTS idx_screws_category ON screws(category_id)`
       ];
 
       for (const statement of statements) {
@@ -133,6 +155,7 @@ async function runMigrations() {
 
         `CREATE TABLE IF NOT EXISTS rc_parts (
           id TEXT PRIMARY KEY,
+          name TEXT,
           company TEXT,
           model TEXT,
           item_code TEXT NOT NULL,
@@ -144,6 +167,24 @@ async function runMigrations() {
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        `CREATE TABLE IF NOT EXISTS screws (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          size TEXT,
+          length TEXT,
+          head_type TEXT,
+          drive_type TEXT,
+          thread_type TEXT,
+          color TEXT,
+          material TEXT,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)`,
@@ -152,7 +193,10 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_catalog_type ON catalog_enums(enum_type)`,
         `CREATE INDEX IF NOT EXISTS idx_rc_parts_box ON rc_parts(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_rc_parts_company ON rc_parts(company)`,
-        `CREATE INDEX IF NOT EXISTS idx_rc_parts_item_code ON rc_parts(item_code)`
+        `CREATE INDEX IF NOT EXISTS idx_rc_parts_item_code ON rc_parts(item_code)`,
+        `CREATE INDEX IF NOT EXISTS idx_screws_box ON screws(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_screws_size ON screws(size)`,
+        `CREATE INDEX IF NOT EXISTS idx_screws_category ON screws(category_id)`
       ];
 
       await execMultiple(statements);

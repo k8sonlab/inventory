@@ -16,22 +16,64 @@
       <button @click="showAddModal = true" class="btn-primary">+ Add Item</button>
     </div>
 
-    <div class="items-list">
+    <div v-if="!filterCategory" class="category-summary">
+      <div class="summary-header">
+        <h3>Browse by category</h3>
+        <span>{{ items.length }} matches</span>
+      </div>
+      <div class="summary-grid">
+        <button
+          v-for="cat in categorySummary"
+          :key="cat.id"
+          class="summary-card"
+          @click="openCategory(cat.id)"
+        >
+          <span class="summary-name">{{ cat.name }}</span>
+          <strong class="summary-count">{{ cat.count }}</strong>
+          <small>items</small>
+        </button>
+      </div>
+    </div>
+
+    <div v-else class="items-list">
       <table class="items-table">
         <thead>
           <tr>
-            <th @click="handleSort('name')" class="sortable" :class="{ active: sortBy === 'name' }">
-              Name {{ sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('size')" class="sortable" :class="{ active: sortBy === 'size' }">
+              Size {{ sortBy === 'size' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
-            <th @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
-              Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('length')" class="sortable" :class="{ active: sortBy === 'length' }">
+              Length {{ sortBy === 'length' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
-            <th @click="handleSort('model')" class="sortable" :class="{ active: sortBy === 'model' }">
-              Model {{ sortBy === 'model' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('head_type')" class="sortable" :class="{ active: sortBy === 'head_type' }">
+              Head Type {{ sortBy === 'head_type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
-            <th @click="handleSort('code')" class="sortable" :class="{ active: sortBy === 'code' }">
-              Item Code {{ sortBy === 'code' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('drive_type')" class="sortable" :class="{ active: sortBy === 'drive_type' }">
+              Drive Type {{ sortBy === 'drive_type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('thread_type')" class="sortable" :class="{ active: sortBy === 'thread_type' }">
+              Thread Type {{ sortBy === 'thread_type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('color')" class="sortable" :class="{ active: sortBy === 'color' }">
+              Color {{ sortBy === 'color' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('material')" class="sortable" :class="{ active: sortBy === 'material' }">
+              Material {{ sortBy === 'material' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <template v-if="!isCurrentCategoryScrews()">
+              <th @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
+                Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+              </th>
+              <th @click="handleSort('model')" class="sortable" :class="{ active: sortBy === 'model' }">
+                Model {{ sortBy === 'model' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+              </th>
+              <th @click="handleSort('code')" class="sortable" :class="{ active: sortBy === 'code' }">
+                Item Code {{ sortBy === 'code' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+              </th>
+              <th @click="handleSort('name')" class="sortable" :class="{ active: sortBy === 'name' }">
+                Name {{ sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+              </th>
+            </template>
             <th v-for="col in getAllDisplayColumns()" :key="col">
               {{ getColumnLabel(col) }}
             </th>
@@ -46,13 +88,24 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in paginatedItems()" :key="item.id" class="item-row" :class="{ 'rc-part': item.source_type === 'rc_part' }">
-            <td class="item-name">{{ item.display_name || item.name || '-' }}</td>
-            <td class="company">{{ item.display_company || '-' }}</td>
-            <td class="model">{{ item.display_model || '-' }}</td>
-            <td class="code">{{ item.display_code || '-' }}</td>
+          <tr v-for="item in paginatedItems()" :key="item.id" class="item-row" :class="{ 'rc-part': item.source_type === 'rc_part', 'screw': item.source_type === 'screw' }">
+            <template v-if="filterCategory && isCurrentCategoryScrews()">
+              <td class="size">{{ item.size || '-' }}</td>
+              <td class="length">{{ item.length || '-' }}</td>
+              <td class="head-type">{{ item.head_type || '-' }}</td>
+              <td class="drive-type">{{ item.drive_type || '-' }}</td>
+              <td class="thread-type">{{ item.thread_type || '-' }}</td>
+              <td class="color">{{ item.color || '-' }}</td>
+              <td class="material">{{ item.material || '-' }}</td>
+            </template>
+            <template v-else>
+              <td class="company">{{ item.display_company || '-' }}</td>
+              <td class="model">{{ item.display_model || '-' }}</td>
+              <td class="code">{{ item.display_code || '-' }}</td>
+              <td class="item-name">{{ item.display_name || item.name || '-' }}</td>
+            </template>
             <td v-for="col in getAllDisplayColumns()" :key="col" class="param-cell">
-              {{ item.source_type === 'rc_part' ? '-' : (parseParameters(item.parameters)[col] || '-') }}
+              {{ item.source_type === 'rc_part' || item.source_type === 'screw' ? '-' : (parseParameters(item.parameters)[col] || '-') }}
             </td>
             <td class="storage">{{ item.storage_id || item.box_name || '-' }}</td>
             <td class="quantity">{{ item.quantity }}</td>
@@ -64,7 +117,7 @@
               </div>
             </td>
             <td class="actions">
-              <button @click="editItem(item)" class="btn-small btn-edit">Edit</button>
+              <button @click="() => editItem(item)" class="btn-small btn-edit">Edit</button>
               <button @click="deleteItem(item.id)" class="btn-small btn-delete">Delete</button>
             </td>
           </tr>
@@ -136,7 +189,7 @@
             </select>
           </div>
 
-          <div class="form-group">
+          <div v-if="formData.item_type !== 'Screws' && formData.item_type !== 'RC Parts'" class="form-group">
             <label>Category</label>
             <select v-model="formData.category_id">
               <option value="">-- No Category --</option>
@@ -146,14 +199,95 @@
             </select>
           </div>
 
+          <div v-if="formData.item_type === 'Screws'" class="screw-fields">
+            <div class="form-group">
+              <label>Size</label>
+              <select v-model="formData.size">
+                <option value="">-- Select Size --</option>
+                <option v-for="value in enumOptions['screw_size'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Length</label>
+              <input v-model="formData.length" type="text" placeholder="Length (mm)" />
+            </div>
+            <div class="form-group">
+              <label>Head Type</label>
+              <select v-model="formData.head_type">
+                <option value="">-- Select Head Type --</option>
+                <option v-for="value in enumOptions['screw_head_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Drive Type</label>
+              <select v-model="formData.drive_type">
+                <option value="">-- Select Drive Type --</option>
+                <option v-for="value in enumOptions['screw_drive_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Thread Type</label>
+              <select v-model="formData.thread_type">
+                <option value="">-- Select Thread Type --</option>
+                <option v-for="value in enumOptions['screw_thread_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Color</label>
+              <select v-model="formData.color">
+                <option value="">-- Select Color --</option>
+                <option v-for="value in enumOptions['screw_color'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Material</label>
+              <select v-model="formData.material">
+                <option value="">-- Select Material --</option>
+                <option v-for="value in enumOptions['screw_material'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div v-if="formData.item_type === 'RC Parts'" class="rc-part-fields">
+            <div class="form-group">
+              <label>Company</label>
+              <select v-model="formData.company">
+                <option value="">-- Select Company --</option>
+                <option v-for="value in enumOptions['rc_company'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Model</label>
+              <select v-model="formData.model">
+                <option value="">-- Select Model --</option>
+                <option v-for="value in enumOptions['rc_model'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Item Code</label>
+              <input v-model="formData.item_code" type="text" placeholder="Item code" />
+            </div>
+          </div>
+
           <div class="form-group">
             <label>Item Name *</label>
             <input v-model="formData.name" type="text" placeholder="Item name" required />
-          </div>
-          
-          <div class="form-group">
-            <label>Quantity</label>
-            <input v-model.number="formData.quantity" type="number" placeholder="Quantity" />
           </div>
 
           <div class="form-group">
@@ -212,19 +346,13 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { itemsService, categoriesService, enumsService } from '../services/api.js';
 
 // Parameter definitions for each item type
 // Types: 'text', 'number', 'date', 'checkbox', 'select' (dropdown)
 const PARAMETER_DEFINITIONS = {
-  'Screws': [
-    { key: 'size', label: 'Size (e.g., M3, M5)', type: 'text', display: true },
-    { key: 'length', label: 'Length (mm)', type: 'number', display: true },
-    { key: 'head_type', label: 'Head Type', type: 'select', enum_type: 'screw_head_type', display: true },
-    { key: 'drive_type', label: 'Drive Type', type: 'select', enum_type: 'screw_drive_type', display: true },
-    { key: 'thread_type', label: 'Thread Type', type: 'select', enum_type: 'screw_thread_type', display: false }
-  ],
+  'Screws': [],
   'Nuts': [
     { key: 'size', label: 'Size (e.g., M3)', type: 'text', display: true },
     { key: 'type', label: 'Type', type: 'select', enum_type: 'nut_type', display: true },
@@ -237,11 +365,7 @@ const PARAMETER_DEFINITIONS = {
     { key: 'od', label: 'Outer Diameter (OD mm)', type: 'number', display: true },
     { key: 'width', label: 'Width (mm)', type: 'number', display: true }
   ],
-  'RC Parts': [
-    { key: 'company', label: 'Company', type: 'select', enum_type: 'rc_company', display: true },
-    { key: 'model', label: 'Model (Car/Vehicle)', type: 'select', enum_type: 'rc_model', display: true },
-    { key: 'item_code', label: 'Item Code / Part Number', type: 'text', display: true }
-  ],
+  'RC Parts': [],
   'Oils/Pastes': [
     { key: 'company', label: 'Company', type: 'select', enum_type: 'oil_paste_company', display: true },
     { key: 'type', label: 'Type', type: 'select', enum_type: 'oil_paste_type', display: true },
@@ -279,17 +403,28 @@ export default {
     const formData = ref({
       name: '',
       item_type: '',
+      company: '',
+      model: '',
+      item_code: '',
+      size: '',
+      length: '',
+      head_type: '',
+      drive_type: '',
+      thread_type: '',
+      color: '',
+      material: '',
       category_id: '',
       box_id: '',
       quantity: 0,
       notes: '',
       parameters: {}
     });
+    const slugify = (value = '') => value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
     const parameterDefinitions = ref([]);
     const enumOptions = ref({}); // Store enum options: { enum_type: [values] }
     const currentPage = ref(1);
-    const itemsPerPage = 50;
-    const sortBy = ref('name');
+    const itemsPerPage = computed(() => 20);
+    const sortBy = ref('company');
     const sortOrder = ref('asc'); // 'asc' or 'desc'
 
     const loadItems = async () => {
@@ -352,9 +487,42 @@ export default {
     };
 
     // Watch for item_type changes
-    watch(() => formData.value.item_type, () => {
-      updateParameterFields();
+    watch(() => formData.value.item_type, async () => {
+      await updateParameterFields();
+      // Load enums based on item type
+      if (formData.value.item_type === 'RC Parts') {
+        await loadEnumOptions(['rc_company', 'rc_model']);
+      } else if (formData.value.item_type === 'Screws') {
+        await loadEnumOptions(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
+      }
     });
+
+    const categorySummary = computed(() => {
+      const counts = {};
+
+      items.value.forEach(item => {
+        const categoryId = item.category_id || item.category_name;
+        if (!categoryId) return;
+        counts[categoryId] = (counts[categoryId] || 0) + 1;
+      });
+
+      return categories.value.map(cat => ({
+        ...cat,
+        count: counts[cat.id] || 0
+      }));
+    });
+
+    const openCategory = (categoryId) => {
+      filterCategory.value = categoryId;
+      sortBy.value = 'company';
+      sortOrder.value = 'asc';
+      currentPage.value = 1;
+      const category = categories.value.find(cat => cat.id === categoryId);
+      if (category) {
+        window.location.hash = `#/items/${slugify(category.name)}`;
+      }
+      loadItems();
+    };
 
     const handleSearch = () => {
       loadItems();
@@ -380,6 +548,15 @@ export default {
       formData.value = {
         name: '',
         item_type: '',
+        company: '',
+        model: '',
+        item_code: '',
+        size: '',
+        length: '',
+        head_type: '',
+        drive_type: '',
+        color: '',
+        material: '',
         category_id: '',
         box_id: '',
         quantity: 0,
@@ -402,7 +579,7 @@ export default {
     };
 
     const totalPages = () => {
-      return Math.ceil(items.value.length / itemsPerPage);
+      return Math.ceil(items.value.length / itemsPerPage.value);
     };
 
     const paginatedItems = () => {
@@ -412,7 +589,28 @@ export default {
       sorted.sort((a, b) => {
         let aVal, bVal;
         
-        if (sortBy.value === 'name') {
+        if (sortBy.value === 'size') {
+          aVal = (a.size || '').toLowerCase();
+          bVal = (b.size || '').toLowerCase();
+        } else if (sortBy.value === 'length') {
+          aVal = (a.length || '').toLowerCase();
+          bVal = (b.length || '').toLowerCase();
+        } else if (sortBy.value === 'head_type') {
+          aVal = (a.head_type || '').toLowerCase();
+          bVal = (b.head_type || '').toLowerCase();
+        } else if (sortBy.value === 'drive_type') {
+          aVal = (a.drive_type || '').toLowerCase();
+          bVal = (b.drive_type || '').toLowerCase();
+        } else if (sortBy.value === 'thread_type') {
+          aVal = (a.thread_type || '').toLowerCase();
+          bVal = (b.thread_type || '').toLowerCase();
+        } else if (sortBy.value === 'color') {
+          aVal = (a.color || '').toLowerCase();
+          bVal = (b.color || '').toLowerCase();
+        } else if (sortBy.value === 'material') {
+          aVal = (a.material || '').toLowerCase();
+          bVal = (b.material || '').toLowerCase();
+        } else if (sortBy.value === 'name') {
           aVal = (a.display_name || a.name || '').toLowerCase();
           bVal = (b.display_name || b.name || '').toLowerCase();
         } else if (sortBy.value === 'company') {
@@ -437,8 +635,9 @@ export default {
         return 0;
       });
       
-      const start = (currentPage.value - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
+      const pageSize = itemsPerPage.value;
+      const start = (currentPage.value - 1) * pageSize;
+      const end = start + pageSize;
       return sorted.slice(start, end);
     };
 
@@ -487,6 +686,21 @@ export default {
       return key;
     };
 
+    const isCurrentCategoryScrews = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name first
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && currentCategory.name.toLowerCase().includes('screw')) {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are screws
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'screw');
+    };
+
     const hasSearchMatch = (item, field) => {
       if (!searchQuery.value) return false;
       const query = searchQuery.value.toLowerCase();
@@ -502,27 +716,67 @@ export default {
       return false;
     };
 
-    const editItem = (item) => {
+    const editItem = async (item) => {
       editingItem.value = item;
       formData.value = {
-        name: item.name,
+        name: item.name || item.display_name || '',
         item_type: item.item_type || '',
+        company: item.display_company || item.company || '',
+        model: item.display_model || item.model || '',
+        item_code: item.display_code || item.item_code || '',
+        size: item.size || '',
+        length: item.length || '',
+        head_type: item.head_type || '',
+        drive_type: item.drive_type || '',
+        color: item.color || '',
+        material: item.material || '',
         category_id: item.category_id || '',
         box_id: item.box_id || '',
         quantity: item.quantity || 0,
         notes: item.notes || '',
         parameters: parseParameters(item.parameters) || {}
       };
-      updateParameterFields();
+      await updateParameterFields();
+      // Load enums based on item type
+      if (formData.value.item_type === 'RC Parts') {
+        await loadEnumOptions(['rc_company', 'rc_model']);
+      } else if (formData.value.item_type === 'Screws') {
+        await loadEnumOptions(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
+      }
       showAddModal.value = true;
     };
 
     const saveItem = async () => {
       try {
+        const payload = { ...formData.value };
+
+        if (payload.item_type === 'Screws') {
+          payload.size = payload.size || '';
+          payload.length = payload.length || '';
+          payload.head_type = payload.head_type || '';
+          payload.drive_type = payload.drive_type || '';
+          payload.thread_type = payload.thread_type || '';
+          payload.color = payload.color || '';
+          payload.material = payload.material || '';
+          payload.source_type = 'screw';
+          // Auto-assign Screws category
+          const screwsCategory = categories.value.find(c => c.name === 'Screws');
+          if (screwsCategory) payload.category_id = screwsCategory.id;
+        } else if (payload.item_type === 'RC Parts') {
+          payload.company = payload.company || '';
+          payload.model = payload.model || '';
+          // Fall back to name if item_code is empty
+          payload.item_code = payload.item_code || payload.name || 'RC Part';
+          payload.source_type = 'rc_part';
+          // Auto-assign RC Parts category
+          const rcCategory = categories.value.find(c => c.name === 'RC Parts');
+          if (rcCategory) payload.category_id = rcCategory.id;
+        }
+
         if (editingItem.value) {
-          await itemsService.update(editingItem.value.id, formData.value);
+          await itemsService.update(editingItem.value.id, payload);
         } else {
-          await itemsService.create(formData.value);
+          await itemsService.create(payload);
         }
         closeModal();
         loadItems();
@@ -547,12 +801,20 @@ export default {
     onMounted(() => {
       // Initialize filterCategory from selectedCategory prop
       filterCategory.value = props.selectedCategory || '';
+      if (filterCategory.value) {
+        sortBy.value = 'company';
+        sortOrder.value = 'asc';
+      }
       loadItems();
       loadCategories();
     });
 
     watch(() => props.selectedCategory, (newVal) => {
       filterCategory.value = newVal || '';
+      if (filterCategory.value) {
+        sortBy.value = 'company';
+        sortOrder.value = 'asc';
+      }
       currentPage.value = 1;
       loadItems();
     });
@@ -576,6 +838,8 @@ export default {
       formData,
       parameterDefinitions,
       enumOptions,
+      categorySummary,
+      openCategory,
       showNotesModal,
       viewingNotes,
       handleSearch,
@@ -588,6 +852,7 @@ export default {
       getAllDisplayColumns,
       getColumnLabel,
       hasSearchMatch,
+      isCurrentCategoryScrews,
       currentPage,
       totalPages,
       paginatedItems,
@@ -616,6 +881,63 @@ export default {
   gap: 1rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
+}
+
+.category-summary {
+  margin-bottom: 2rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  color: #334155;
+}
+
+.summary-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.summary-card {
+  border: 1px solid #dbeafe;
+  background: white;
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
+}
+
+.summary-name {
+  font-weight: 600;
+}
+
+.summary-count {
+  font-size: 1.8rem;
+  line-height: 1.1;
+  color: #1d4ed8;
 }
 
 .search-bar input,
