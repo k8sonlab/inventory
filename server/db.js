@@ -110,7 +110,16 @@ export async function exec(sql, params = []) {
     return result.rows;
   } else {
     try {
-      db.run(sql, params);
+      if (params.length > 0) {
+        // Use prepared statement for parameterized queries
+        const stmt = db.prepare(sql);
+        stmt.bind(params);
+        stmt.step();
+        stmt.free();
+      } else {
+        // Direct execution for non-parameterized queries
+        db.exec(sql);
+      }
       saveSQLiteDatabase();
       return { changes: 1 };
     } catch (e) {
@@ -133,7 +142,7 @@ export async function execMultiple(statements) {
   } else {
     try {
       statements.forEach(statement => {
-        db.run(statement);
+        db.exec(statement);
       });
       saveSQLiteDatabase();
     } catch (e) {

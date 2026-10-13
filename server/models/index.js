@@ -329,12 +329,13 @@ export class RCPart {
     const rcParts = await RCPart.getAll(filters);
     const screws = await Screw.getAll(filters);
     const nuts = await Nut.getAll(filters);
+    const washersBearings = await WasherBearing.getAll(filters);
     const bearings = await Bearing.getAll(filters);
     const oilPastes = await OilPaste.getAll(filters);
     const batteries = await Battery.getAll(filters);
     const otherItems = await OtherItem.getAll(filters);
     
-    console.log(`[getAllCombined] items=${items.length}, rcParts=${rcParts.length}, screws=${screws.length}, nuts=${nuts.length}, bearings=${bearings.length}, oilPastes=${oilPastes.length}, batteries=${batteries.length}, otherItems=${otherItems.length}`);
+    console.log(`[getAllCombined] items=${items.length}, rcParts=${rcParts.length}, screws=${screws.length}, nuts=${nuts.length}, washersBearings=${washersBearings.length}, bearings=${bearings.length}, oilPastes=${oilPastes.length}, batteries=${batteries.length}, otherItems=${otherItems.length}`);
     
     // Combine and format all types
     const combined = [
@@ -375,6 +376,16 @@ export class RCPart {
         display_model: null,
         display_code: null,
         item_type: 'Nuts'
+      })),
+      ...washersBearings.map(wb => ({
+        ...wb,
+        id: wb.id,
+        source_type: 'washer_bearing',
+        display_name: wb.name,
+        display_company: null,
+        display_model: null,
+        display_code: null,
+        item_type: 'Washers & Bearings'
       })),
       ...bearings.map(br => ({
         ...br,
@@ -983,5 +994,253 @@ export class OtherItem {
     const sql = `DELETE FROM other_items WHERE id = ${isPostgresDB() ? '$1' : '?'}`;
     await exec(sql, [id]);
     return { success: true };
+  }
+}
+
+export class WasherBearing {
+  static async getAll(filters = {}) {
+    let sql = `
+      SELECT wb.*, c.name as category_name, b.box_name, b.storage_id, s.location, 'washer_bearing' as source_type
+      FROM washers_bearings wb
+      LEFT JOIN categories c ON wb.category_id = c.id
+      LEFT JOIN boxes b ON wb.box_id = b.id
+      LEFT JOIN shelves s ON b.shelf_id = s.id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramCount = 1;
+    const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
+    const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
+
+    if (filters.category_id && filters.category_id !== '') {
+      sql += ` AND wb.category_id = ${ph()}`;
+      params.push(filters.category_id);
+    }
+    if (filters.box_id) {
+      sql += ` AND wb.box_id = ${ph()}`;
+      params.push(filters.box_id);
+    }
+    if (filters.wb_category) {
+      sql += ` AND wb.category = ${ph()}`;
+      params.push(filters.wb_category);
+    }
+    if (filters.subtype) {
+      sql += ` AND wb.subtype = ${ph()}`;
+      params.push(filters.subtype);
+    }
+    if (filters.search) {
+      sql += ` AND (wb.name ${likeOp} ${ph()} OR b.storage_id ${likeOp} ${ph()} OR wb.notes ${likeOp} ${ph()} OR wb.subtype ${likeOp} ${ph()})`;
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+    }
+
+    sql += ` ORDER BY wb.name`;
+
+    return await query(sql, params);
+  }
+
+  static async getById(id) {
+    const sql = `SELECT wb.*, c.name as category_name, b.box_name, b.storage_id, s.location
+       FROM washers_bearings wb
+       LEFT JOIN categories c ON wb.category_id = c.id
+       LEFT JOIN boxes b ON wb.box_id = b.id
+       LEFT JOIN shelves s ON b.shelf_id = s.id
+       WHERE wb.id = ${isPostgresDB() ? '$1' : '?'}`;
+
+    const row = await queryOne(sql, [id]);
+    return row;
+  }
+
+  static async create(data) {
+    const id = uuidv4();
+    const sql = `
+      INSERT INTO washers_bearings (
+        id, category, name, inner_diameter, outer_diameter, thickness, 
+        subtype, material, quantity, box_id, category_id, notes, 
+        created_at, updated_at
+      ) VALUES (${isPostgresDB() ? '$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()' : '?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\')'}
+      )`;
+
+    const params = [
+      id,
+      data.category || 'Bearing',
+      data.name,
+      data.inner_diameter || data.id_inner || null,
+      data.outer_diameter || data.od || null,
+      data.thickness || data.width || null,
+      data.subtype || data.type || null,
+      data.material || null,
+      data.quantity || 0,
+      data.box_id || null,
+      data.category_id || null,
+      data.notes || null
+    ];
+
+    await exec(sql, params);
+    return await WasherBearing.getById(id);
+  }
+
+  static async update(id, data) {
+    const updates = [];
+    const params = [];
+    let paramCount = 1;
+    const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
+
+    if (data.category) {
+      updates.push(`category = ${ph()}`);
+      params.push(data.category);
+    }
+    if (data.name) {
+      updates.push(`name = ${ph()}`);
+      params.push(data.name);
+    }
+    if (data.inner_diameter !== undefined) {
+      updates.push(`inner_diameter = ${ph()}`);
+      params.push(data.inner_diameter);
+    }
+    if (data.id_inner !== undefined) {
+      updates.push(`inner_diameter = ${ph()}`);
+      params.push(data.id_inner);
+    }
+    if (data.outer_diameter !== undefined) {
+      updates.push(`outer_diameter = ${ph()}`);
+      params.push(data.outer_diameter);
+    }
+    if (data.od !== undefined) {
+      updates.push(`outer_diameter = ${ph()}`);
+      params.push(data.od);
+    }
+    if (data.thickness !== undefined) {
+      updates.push(`thickness = ${ph()}`);
+      params.push(data.thickness);
+    }
+    if (data.width !== undefined) {
+      updates.push(`thickness = ${ph()}`);
+      params.push(data.width);
+    }
+    if (data.subtype !== undefined) {
+      updates.push(`subtype = ${ph()}`);
+      params.push(data.subtype || null);
+    }
+    if (data.material !== undefined) {
+      updates.push(`material = ${ph()}`);
+      params.push(data.material || null);
+    }
+    if (data.quantity !== undefined) {
+      updates.push(`quantity = ${ph()}`);
+      params.push(data.quantity);
+    }
+    if (data.box_id !== undefined) {
+      updates.push(`box_id = ${ph()}`);
+      params.push(data.box_id);
+    }
+    if (data.category_id !== undefined) {
+      updates.push(`category_id = ${ph()}`);
+      params.push(data.category_id);
+    }
+    if (data.notes) {
+      updates.push(`notes = ${ph()}`);
+      params.push(data.notes);
+    }
+
+    updates.push(`updated_at = ${isPostgresDB() ? 'NOW()' : "datetime('now')"}`);
+
+    if (updates.length === 0) return await WasherBearing.getById(id);
+
+    const sql = `UPDATE washers_bearings SET ${updates.join(', ')} WHERE id = ${ph()}`;
+    params.push(id);
+
+    await exec(sql, params);
+    return await WasherBearing.getById(id);
+  }
+
+  static async delete(id) {
+    const sql = `DELETE FROM washers_bearings WHERE id = ${isPostgresDB() ? '$1' : '?'}`;
+    await exec(sql, [id]);
+    return { success: true };
+  }
+
+  static parseBearingModel(name) {
+    const result = {
+      inner_diameter: null,
+      outer_diameter: null,
+      thickness: null,
+      subtype: null,
+      name: name
+    };
+
+    const sealTypes = ['RS', 'ZZ', 'OPEN', '2RS', 'METAL', 'RUBBER', 'RVF', 'VV', 'Z'];
+    
+    for (const seal of sealTypes) {
+      if (name.toUpperCase().includes(seal)) {
+        result.subtype = seal;
+        break;
+      }
+    }
+
+    const match = name.match(/^(\d)(\d)(\d)(\d)/);
+    if (match) {
+      const d = parseInt(match[1]) * 10;
+      const D = parseInt(match[2]) * 10 + parseInt(match[3]);
+      const B = parseInt(match[4]);
+      result.inner_diameter = d;
+      result.outer_diameter = D;
+      result.thickness = B;
+    }
+
+    return result;
+  }
+
+  static parseWasherSize(size, name = '') {
+    const result = {
+      outer_diameter: null,
+      inner_diameter: null,
+      thickness: null,
+      subtype: null,
+      name: name || size
+    };
+
+    if (!size) return result;
+
+    const nameUpper = (name || '').toUpperCase();
+    if (nameUpper.includes('LOCKING')) {
+      result.subtype = nameUpper.includes('TYPE 2') ? 'Locking type 2' : 'Locking';
+    } else if (nameUpper.includes('NORMAL')) {
+      result.subtype = 'Normal';
+    }
+
+    const sizeUpper = size.toUpperCase();
+    
+    const match = sizeUpper.match(/(\d+\.?\d*)\s*[Xx]\s*(\d+\.?\d*)\s*[Xx]\s*(\d+\.?\d*)/);
+    if (match) {
+      result.outer_diameter = parseFloat(match[1]);
+      result.inner_diameter = parseFloat(match[2]);
+      result.thickness = parseFloat(match[3]);
+      return result;
+    }
+
+    const mMatch = sizeUpper.match(/M(\d+)/);
+    if (mMatch) {
+      const mSize = parseInt(mMatch[1]);
+      const metricWasherSpecs = {
+        2: { id: 2.2, od: 5, thickness: 0.3 },
+        3: { id: 3.2, od: 7, thickness: 0.5 },
+        4: { id: 4.3, od: 9, thickness: 0.8 },
+        5: { id: 5.3, od: 10, thickness: 1 },
+        6: { id: 6.4, od: 12, thickness: 1.6 },
+        8: { id: 8.4, od: 16, thickness: 1.6 },
+        10: { id: 10.5, od: 20, thickness: 2 },
+        12: { id: 13, od: 24, thickness: 2.5 }
+      };
+      if (metricWasherSpecs[mSize]) {
+        result.inner_diameter = metricWasherSpecs[mSize].id;
+        result.outer_diameter = metricWasherSpecs[mSize].od;
+        result.thickness = metricWasherSpecs[mSize].thickness;
+      }
+    }
+
+    return result;
   }
 }

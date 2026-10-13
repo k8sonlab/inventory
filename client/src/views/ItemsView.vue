@@ -132,7 +132,28 @@
             <th v-if="filterCategory && isCurrentCategoryOtherItems()" @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
               Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
-            <template v-if="!isCurrentCategoryScrews() && !isCurrentCategoryNuts() && !isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries() && !isCurrentCategoryOtherItems()">
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('category')" class="sortable" :class="{ active: sortBy === 'category' }">
+              Type {{ sortBy === 'category' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('name')" class="sortable" :class="{ active: sortBy === 'name' }">
+              Name {{ sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('inner_diameter')" class="sortable" :class="{ active: sortBy === 'inner_diameter' }">
+              ID {{ sortBy === 'inner_diameter' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('outer_diameter')" class="sortable" :class="{ active: sortBy === 'outer_diameter' }">
+              OD {{ sortBy === 'outer_diameter' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('thickness')" class="sortable" :class="{ active: sortBy === 'thickness' }">
+              Thickness {{ sortBy === 'thickness' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('subtype')" class="sortable" :class="{ active: sortBy === 'subtype' }">
+              Subtype {{ sortBy === 'subtype' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryWashersBearings()" @click="handleSort('material')" class="sortable" :class="{ active: sortBy === 'material' }">
+              Material {{ sortBy === 'material' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <template v-if="!isCurrentCategoryScrews() && !isCurrentCategoryNuts() && !isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries() && !isCurrentCategoryOtherItems() && !isCurrentCategoryWashersBearings()">
               <th @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
                 Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
               </th>
@@ -205,6 +226,15 @@
               <td class="name">{{ item.name || '-' }}</td>
               <td class="size">{{ item.size || '-' }}</td>
               <td class="company">{{ item.company || '-' }}</td>
+            </template>
+            <template v-else-if="filterCategory && isCurrentCategoryWashersBearings()">
+              <td class="category">{{ item.category || '-' }}</td>
+              <td class="name">{{ item.name || '-' }}</td>
+              <td class="inner-diameter">{{ item.inner_diameter !== null ? item.inner_diameter : '-' }}</td>
+              <td class="outer-diameter">{{ item.outer_diameter !== null ? item.outer_diameter : '-' }}</td>
+              <td class="thickness">{{ item.thickness !== null ? item.thickness : '-' }}</td>
+              <td class="subtype">{{ item.subtype || '-' }}</td>
+              <td class="material">{{ item.material || '-' }}</td>
             </template>
             <template v-else>
               <td class="company">{{ item.display_company || '-' }}</td>
@@ -289,21 +319,11 @@
               <option value="">Select Item Type</option>
               <option value="Screws">🔩 Screws</option>
               <option value="Nuts">⚙️ Nuts</option>
-              <option value="Bearings">🔄 Bearings</option>
+              <option value="Washers & Bearings">⚪ Washers & Bearings</option>
               <option value="RC Parts">🏎️ RC Parts</option>
               <option value="Oils/Pastes">🛢️ Oils/Pastes</option>
               <option value="Batteries">🔋 Batteries</option>
               <option value="Other Items">📦 Other Items</option>
-            </select>
-          </div>
-
-          <div v-if="formData.item_type !== 'Screws' && formData.item_type !== 'Nuts' && formData.item_type !== 'RC Parts'" class="form-group">
-            <label>Category</label>
-            <select v-model="formData.category_id">
-              <option value="">-- No Category --</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                {{ cat.name }}
-              </option>
             </select>
           </div>
 
@@ -400,45 +420,6 @@
               <label>
                 <input type="checkbox" v-model="formData.has_washer" />
                 Has Washer
-              </label>
-            </div>
-          </div>
-
-          <div v-if="formData.item_type === 'Bearings'" class="bearing-fields">
-            <div class="form-group">
-              <label>Type</label>
-              <select v-model="formData.type">
-                <option value="">-- Select Type --</option>
-                <option v-for="value in enumOptions['bearing_type'] || []" :key="value" :value="value">
-                  {{ value }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Seal Type</label>
-              <select v-model="formData.seal_type">
-                <option value="">-- Select Seal Type --</option>
-                <option v-for="value in enumOptions['bearing_seal_type'] || []" :key="value" :value="value">
-                  {{ value }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>ID (Inner Diameter)</label>
-              <input v-model.number="formData.id_inner" type="number" step="0.001" placeholder="Inner diameter" />
-            </div>
-            <div class="form-group">
-              <label>OD (Outer Diameter)</label>
-              <input v-model.number="formData.od" type="number" step="0.001" placeholder="Outer diameter" />
-            </div>
-            <div class="form-group">
-              <label>Width</label>
-              <input v-model.number="formData.width" type="number" step="0.001" placeholder="Width" />
-            </div>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" v-model="formData.flanged" />
-                Flanged
               </label>
             </div>
           </div>
@@ -540,6 +521,50 @@
             </div>
           </div>
 
+          <div v-if="formData.item_type === 'Washers & Bearings'" class="washer-bearing-fields">
+            <div class="form-group">
+              <label>Type *</label>
+              <select v-model="formData.wb_category" required>
+                <option value="Washer">Washer</option>
+                <option value="Bearing">Bearing</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Name</label>
+              <input v-model="formData.name" type="text" placeholder="e.g., 6801RS, 6X2.5x0.5" />
+            </div>
+            <div class="form-group">
+              <label>Inner Diameter (mm)</label>
+              <input v-model.number="formData.inner_diameter" type="number" placeholder="e.g., 8" step="0.001" />
+            </div>
+            <div class="form-group">
+              <label>Outer Diameter (mm)</label>
+              <input v-model.number="formData.outer_diameter" type="number" placeholder="e.g., 22" step="0.001" />
+            </div>
+            <div class="form-group">
+              <label>Thickness (mm)</label>
+              <input v-model.number="formData.thickness" type="number" placeholder="e.g., 7" step="0.001" />
+            </div>
+            <div class="form-group">
+              <label>Subtype</label>
+              <select v-model="formData.subtype">
+                <option value="">-- Select Subtype --</option>
+                <option v-for="value in enumOptions['washer_bearing_subtype'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Material</label>
+              <select v-model="formData.material">
+                <option value="">-- Select Material --</option>
+                <option v-for="value in enumOptions['washer_bearing_material'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+          </div>
+
           <div v-if="formData.item_type === 'RC Parts'" class="rc-part-fields">
             <div class="form-group">
               <label>Company</label>
@@ -565,7 +590,7 @@
             </div>
           </div>
 
-          <div v-if="formData.item_type !== 'Batteries'" class="form-group">
+          <div v-if="formData.item_type !== 'Batteries' && formData.item_type !== 'Washers & Bearings'" class="form-group">
             <label>Item Name *</label>
             <input v-model="formData.name" type="text" placeholder="Item name" required />
           </div>
@@ -591,7 +616,7 @@
           </div>
 
           <!-- Dynamic Parameters based on Item Type -->
-          <div v-if="parameterDefinitions.length > 0 && formData.item_type !== 'Nuts' && formData.item_type !== 'Bearings' && formData.item_type !== 'Oils/Pastes' && formData.item_type !== 'Batteries'" class="form-section">
+          <div v-if="parameterDefinitions.length > 0 && formData.item_type !== 'Nuts' && formData.item_type !== 'Oils/Pastes' && formData.item_type !== 'Batteries' && formData.item_type !== 'Other Items'" class="form-section">
             <label class="section-title">📋 Item Parameters</label>
             <div v-for="param in parameterDefinitions" :key="param.key" class="form-group">
               <label>{{ param.label }}</label>
@@ -621,7 +646,7 @@
           </div>
 
           <!-- Display existing parameters in edit mode -->
-          <div v-else-if="editingItem && formData.item_type !== 'Nuts' && formData.item_type !== 'Bearings' && formData.item_type !== 'Oils/Pastes' && formData.item_type !== 'Batteries' && formData.parameters && Object.keys(formData.parameters).length > 0" class="form-group">
+          <div v-else-if="editingItem && formData.item_type !== 'Nuts' && formData.item_type !== 'Oils/Pastes' && formData.item_type !== 'Batteries' && formData.item_type !== 'Other Items' && formData.parameters && Object.keys(formData.parameters).length > 0" class="form-group">
             <label>📋 Parameters</label>
             <div class="parameters-display">
               <div v-for="(value, key) in parseParameters(formData.parameters)" :key="key" class="param-item">
@@ -880,10 +905,10 @@ export default {
         await loadEnumOptions(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
       } else if (formData.value.item_type === 'Nuts') {
         await loadEnumOptions(['nut_size', 'nut_type', 'nut_color']);
-      } else if (formData.value.item_type === 'Bearings') {
-        await loadEnumOptions(['bearing_type', 'bearing_seal_type']);
       } else if (formData.value.item_type === 'Oils/Pastes') {
         await loadEnumOptions(['oil_paste_company', 'oil_paste_type']);
+      } else if (formData.value.item_type === 'Washers & Bearings') {
+        await loadEnumOptions(['washer_bearing_subtype', 'washer_bearing_material']);
       }
     });
 
@@ -924,6 +949,14 @@ export default {
     };
 
     const handleFilter = () => {
+      // Set default sort for batteries to Size
+      if (filterCategory.value) {
+        const batteryCategory = categories.value.find(c => c.name === 'Batteries');
+        if (filterCategory.value === batteryCategory?.id) {
+          sortBy.value = 'size';
+          sortOrder.value = 'asc';
+        }
+      }
       loadItems();
     };
 
@@ -964,6 +997,11 @@ export default {
         flanged: false,
         seal_type: '',
         characteristic: '',
+        inner_diameter: null,
+        outer_diameter: null,
+        thickness: null,
+        subtype: '',
+        wb_category: 'Washer',
         category_id: '',
         box_id: '',
         quantity: 0,
@@ -1173,13 +1211,13 @@ export default {
     const isCurrentCategoryBearings = () => {
       if (!filterCategory.value) return false;
       
-      // Check category name first
+      // Check category name - must be exactly "Bearings", not "Washers & Bearings"
       const currentCategory = categories.value.find(c => c.id === filterCategory.value);
-      if (currentCategory && currentCategory.name.toLowerCase().includes('bearing')) {
+      if (currentCategory && currentCategory.name === 'Bearings') {
         return true;
       }
       
-      // Fallback: check if any items in category are bearings
+      // Fallback: check if any items in category are bearings (old type)
       if (items.value.length === 0) return false;
       const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
       return categoryItems.some(i => i.source_type === 'bearing');
@@ -1230,6 +1268,21 @@ export default {
       return categoryItems.some(i => i.source_type === 'other_item');
     };
 
+    const isCurrentCategoryWashersBearings = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name - must be exactly "Washers & Bearings"
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && currentCategory.name === 'Washers & Bearings') {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are washer_bearing type
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'washer_bearing');
+    };
+
     const hasSearchMatch = (item, field) => {
       if (!searchQuery.value) return false;
       const query = searchQuery.value.toLowerCase();
@@ -1249,6 +1302,8 @@ export default {
 
     const editItem = async (item) => {
       editingItem.value = item;
+      console.log('[EDIT] Item loaded:', item);
+      console.log('[EDIT] Item subtype:', item.subtype);
       formData.value = {
         name: item.name || item.display_name || '',
         item_type: item.item_type || '',
@@ -1270,6 +1325,11 @@ export default {
         flanged: item.flanged || false,
         seal_type: item.seal_type || '',
         characteristic: item.characteristic || '',
+        inner_diameter: item.inner_diameter,
+        outer_diameter: item.outer_diameter,
+        thickness: item.thickness,
+        subtype: item.subtype || '',
+        wb_category: item.category || 'Washer',
         expiration_date: item.expiration_date || '',
         mah: item.mah || null,
         rechargeable: item.rechargeable ? true : false,
@@ -1287,12 +1347,12 @@ export default {
         await loadEnumOptions(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
       } else if (formData.value.item_type === 'Nuts') {
         await loadEnumOptions(['nut_size', 'nut_type', 'nut_color']);
-      } else if (formData.value.item_type === 'Bearings') {
-        await loadEnumOptions(['bearing_type', 'bearing_seal_type']);
       } else if (formData.value.item_type === 'Oils/Pastes') {
         await loadEnumOptions(['oil_paste_company', 'oil_paste_type']);
       } else if (formData.value.item_type === 'Batteries') {
         await loadEnumOptions(['battery_size', 'battery_company', 'battery_model', 'battery_type']);
+      } else if (formData.value.item_type === 'Washers & Bearings') {
+        await loadEnumOptions(['washer_bearing_subtype', 'washer_bearing_material']);
       } else if (formData.value.item_type === 'Other Items') {
         // For Other Items, item.item_type contains the specific item type
         formData.value.other_item_type = item.item_type;
@@ -1307,6 +1367,12 @@ export default {
     const saveItem = async () => {
       try {
         const payload = { ...formData.value };
+        console.log('[SAVE] Initial payload:', JSON.stringify(payload, null, 2));
+        console.log('[SAVE] formData.inner_diameter:', formData.value.inner_diameter, 'type:', typeof formData.value.inner_diameter);
+        console.log('[SAVE] formData.outer_diameter:', formData.value.outer_diameter, 'type:', typeof formData.value.outer_diameter);
+        console.log('[SAVE] formData.thickness:', formData.value.thickness, 'type:', typeof formData.value.thickness);
+        console.log('[SAVE] formData.subtype:', formData.value.subtype, 'type:', typeof formData.value.subtype);
+        console.log('[SAVE] formData.material:', formData.value.material, 'type:', typeof formData.value.material);
 
         if (payload.item_type === 'Screws') {
           payload.size = payload.size || '';
@@ -1331,18 +1397,6 @@ export default {
           // Auto-assign Nuts category
           const nutsCategory = categories.value.find(c => c.name === 'Nuts');
           if (nutsCategory) payload.category_id = nutsCategory.id;
-        } else if (payload.item_type === 'Bearings') {
-          payload.type = payload.type || '';
-          payload.id_inner = payload.id_inner || null;
-          payload.od = payload.od || null;
-          payload.width = payload.width || null;
-          payload.flanged = payload.flanged || false;
-          payload.source_type = 'bearing';
-          // Bearings don't use parameters
-          delete payload.parameters;
-          // Auto-assign Bearings category
-          const bearingsCategory = categories.value.find(c => c.name === 'Bearings');
-          if (bearingsCategory) payload.category_id = bearingsCategory.id;
         } else if (payload.item_type === 'Oils/Pastes') {
           payload.company = payload.company || '';
           payload.type = payload.type || '';
@@ -1391,11 +1445,44 @@ export default {
           delete payload.other_item_type;
           delete payload.other_item_name;
           delete payload.other_item_company;
+        } else if (payload.item_type === 'Washers & Bearings') {
+          payload.category = payload.wb_category || 'Washer';
+          // Only set dimensions if they have a value; preserve existing values if not provided
+          if (payload.inner_diameter === null || payload.inner_diameter === undefined || payload.inner_diameter === '') {
+            delete payload.inner_diameter;
+          }
+          if (payload.outer_diameter === null || payload.outer_diameter === undefined || payload.outer_diameter === '') {
+            delete payload.outer_diameter;
+          }
+          if (payload.thickness === null || payload.thickness === undefined || payload.thickness === '') {
+            delete payload.thickness;
+          }
+          // Delete old field names that might conflict
+          delete payload.id_inner;
+          delete payload.od;
+          delete payload.width;
+          payload.subtype = payload.subtype || '';
+          payload.material = payload.material || '';
+          payload.source_type = 'washer_bearing';
+          // Auto-assign Washers & Bearings category
+          const wbCategory = categories.value.find(c => c.name === 'Washers & Bearings');
+          if (wbCategory) payload.category_id = wbCategory.id;
+          // Clean up the wb_category field
+          delete payload.wb_category;
         }
 
         if (editingItem.value) {
-          await itemsService.update(editingItem.value.id, payload);
+          console.log('[SAVE] Updating item with payload:', JSON.stringify(payload, null, 2));
+          try {
+            const response = await itemsService.update(editingItem.value.id, payload);
+            console.log('[SAVE] Update response:', response);
+            console.log('[SAVE] Response data:', JSON.stringify(response.data, null, 2));
+          } catch (error) {
+            console.error('[SAVE] Update error:', error);
+            throw error;
+          }
         } else {
+          console.log('[SAVE] Creating item with payload:', JSON.stringify(payload, null, 2));
           await itemsService.create(payload);
         }
         closeModal();
@@ -1479,6 +1566,7 @@ export default {
       isCurrentCategoryOilPastes,
       isCurrentCategoryBatteries,
       isCurrentCategoryOtherItems,
+      isCurrentCategoryWashersBearings,
       currentPage,
       totalPages,
       paginatedItems,

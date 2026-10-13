@@ -1,6 +1,7 @@
 import XLSX from 'xlsx';
-import { initializeDatabase, closeDatabase, isPostgresDB, query, exec } from '../db.js';
-import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum, OtherItem } from '../models/index.js';
+import { initializeDatabase, closeDatabase, isPostgresDB, query, queryOne, exec } from '../db.js';
+import { runMigrations } from '../migrations/run.js';
+import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum, OtherItem, WasherBearing } from '../models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -14,6 +15,7 @@ async function importExcelData() {
     console.log(`\n📂 Reading Excel file: ${filePath}\n`);
     
     await initializeDatabase();
+    await runMigrations();
     const db = isPostgresDB() ? 'PostgreSQL' : 'SQLite';
     console.log(`🗄️  Using ${db} database\n`);
     
@@ -162,7 +164,7 @@ async function importExcelData() {
 
     // 5. Create Categories
     console.log('\n📂 Creating Item Categories...');
-    const categories = ['Screws', 'Nuts', 'Bearings', 'Other Items', 'RC Parts', 'Oils/Pastes', 'Batteries'];
+    const categories = ['Screws', 'Nuts', 'Other Items', 'RC Parts', 'Oils/Pastes', 'Batteries', 'Washers & Bearings'];
     const categoryMap = {};
     
     for (const catName of categories) {
@@ -306,59 +308,10 @@ async function importExcelData() {
       console.log(`  ✓ Imported ${nutCount} nut entries`);
     }
 
-    // 8. Import Bearings
-    console.log('\n🔄 Importing Bearings...');
-    const bearingsSheet = workbook.Sheets['Bearings'];
-    if (!bearingsSheet) {
-      console.log('  ⚠️  "Bearings" sheet not found');
-    } else {
-      const bearingsData = XLSX.utils.sheet_to_json(bearingsSheet);
-      let bearingCount = 0;
-      
-      // Extract unique enum values from bearings data
-      const uniqueTypes = new Set();
-      const uniqueSealTypes = new Set();
-      
-      for (const row of bearingsData) {
-        if (row['Type']) uniqueTypes.add(row['Type']);
-        // Extract seal type from notes
-        if (row['Notes']) uniqueSealTypes.add(row['Notes']);
-      }
-      
-      // Create enums from extracted values
-      for (const type of uniqueTypes) {
-        await CatalogEnum.create('bearing_type', type);
-      }
-      for (const sealType of uniqueSealTypes) {
-        await CatalogEnum.create('bearing_seal_type', sealType);
-      }
-      
-      if (uniqueTypes.size > 0) console.log(`  ✓ Bearing types: ${uniqueTypes.size} values`);
-      if (uniqueSealTypes.size > 0) console.log(`  ✓ Bearing seal types: ${uniqueSealTypes.size} values`);
-      
-      for (const row of bearingsData) {
-        if (!row['Storage ID']) continue;
-        
-        const boxId = boxMap[row['Storage ID']];
-        if (!boxId) continue;
-        
-        await Bearing.create({
-          name: row['Type'] || 'Bearing',
-          type: row['Type'] || '',
-          seal_type: row['Notes'] || '',
-          id_inner: row['ID'] ? parseFloat(row['ID']) : null,
-          od: row['OD'] ? parseFloat(row['OD']) : null,
-          width: row['Width'] ? parseFloat(row['Width']) : null,
-          flanged: row['Flanged'] ? true : false,
-          box_id: boxId,
-          category_id: categoryMap['Bearings'],
-          quantity: row['Amount'] || 0,
-          notes: ''
-        });
-        bearingCount++;
-      }
-      console.log(`  ✓ Imported ${bearingCount} bearing entries`);
-    }
+    // 8. Clear legacy Bearings (moved to Washers & Bearings table)
+    console.log('\n🔄 Clearing legacy Bearings category...');
+    await exec(`DELETE FROM items WHERE item_type = 'Bearings'`);
+    console.log('  ✓ Cleared legacy Bearings from items table');
 
     // 9. Import Other Items
     console.log('\n📦 Importing Other Items...');
@@ -381,6 +334,9 @@ async function importExcelData() {
       for (const row of otherData) {
         if (!row['Storage ID'] || !row['Name']) continue;
         
+        // Skip washers - they'll be imported to washers_bearings instead
+        if (row['Item Type'] === 'Washer') continue;
+        
         const boxId = boxMap[row['Storage ID']];
         if (!boxId) continue;
         
@@ -400,7 +356,157 @@ async function importExcelData() {
       console.log(`  ✓ Imported ${otherCount} other items into other_items table`);
     }
 
-    // 9. Import RC Parts into the dedicated rc_parts table
+    // 10. Import Washers & Bearings (unified table)
+    console.log('\n⚙️  Importing Washers & Bearings into unified table...');
+    
+    // Query for Washers & Bearings category (may not be in initial categoryMap)
+    let wbCategory = categoryMap['Washers & Bearings'];
+    if (!wbCategory) {
+      const wbCat = await queryOne('SELECT id FROM categories WHERE name = ?', ['Washers & Bearings']);
+      wbCategory = wbCat?.id;
+    }
+    
+    if (wbCategory) {
+      let wbCount = 0;
+      
+      // Extract and create enums for washer/bearing subtypes
+      const uniqueSubtypes = new Set();
+      
+      // Clear old enum values
+      await exec('DELETE FROM catalog_enums WHERE enum_type IN (?, ?)', ['washer_bearing_subtype', 'washer_bearing_material']);
+      
+      // Collect bearing subtypes
+      if (workbook.SheetNames.includes('Bearings')) {
+        const bearingsData = XLSX.utils.sheet_to_json(workbook.Sheets['Bearings']);
+        for (const row of bearingsData) {
+          // Only add Notes as subtype if it's NOT a dimension (e.g., skip "10x5", "15x6x1.2", "3x5x0.1")
+          // Match patterns like: 10x5, 15x6x1.2, 3x5x0.1, 8x12x0.3, etc.
+          const notes = String(row['Notes'] || '').trim();
+          if (notes && !notes.match(/^[\d.]+[x][\d.]+/)) {
+            uniqueSubtypes.add(notes);
+          }
+        }
+      }
+      
+      // Collect bearing subtypes only
+      // Note: Company names are not materials, so we skip the materials collection
+      // Washers/Bearings will have empty materials for now
+      if (workbook.SheetNames.includes('Other Items')) {
+        const otherData = XLSX.utils.sheet_to_json(workbook.Sheets['Other Items']);
+        for (const row of otherData) {
+          if (row['Item Type'] === 'Washer') {
+            // Only add Size as subtype if it's NOT a dimension (e.g., skip "10x5", "15x6x1.2", "3x5x0.1")
+            // Match patterns like: 10x5, 15x6x1.2, 3x5x0.1, 8x12x0.3, etc.
+            const size = String(row['Size'] || '').trim();
+            if (size && !size.match(/^[\d.]+[x][\d.]+/)) {
+              uniqueSubtypes.add(size);
+            }
+            // Skip Company - it's not a material, it's a supplier name
+          }
+        }
+      }
+      
+      // Create enum values for subtypes only
+      for (const subtype of uniqueSubtypes) {
+        if (subtype.trim()) {
+          await CatalogEnum.create('washer_bearing_subtype', subtype);
+        }
+      }
+      
+      if (uniqueSubtypes.size > 0) console.log(`  ✓ Washer/Bearing subtypes: ${uniqueSubtypes.size} values`);
+      
+      // Import Bearings from Bearings sheet
+      if (workbook.SheetNames.includes('Bearings')) {
+        const bearingsData = XLSX.utils.sheet_to_json(workbook.Sheets['Bearings']);
+        for (const row of bearingsData) {
+          if (!row['Storage ID']) continue;
+          
+          const boxId = boxMap[row['Storage ID']];
+          if (!boxId) continue;
+          
+          // Only use Notes as subtype if it's NOT a dimension
+          let bearingSubtype = '';
+          const notes = String(row['Notes'] || '').trim();
+          if (notes && !notes.match(/^[\d.]+[x][\d.]+/)) {
+            bearingSubtype = notes;
+          }
+          
+          await WasherBearing.create({
+            category: 'Bearing',
+            name: row['Type'] || 'Bearing',
+            inner_diameter: row['ID'] ? parseFloat(row['ID']) : null,
+            outer_diameter: row['OD'] ? parseFloat(row['OD']) : null,
+            thickness: row['Width'] ? parseFloat(row['Width']) : null,
+            subtype: bearingSubtype,
+            material: '',
+            quantity: row['Amount'] || 0,
+            box_id: boxId,
+            category_id: wbCategory,
+            notes: ''
+          });
+          wbCount++;
+        }
+        console.log(`  ✓ Imported ${wbCount} bearings into washers_bearings table`);
+      }
+      
+      // Import Washers from Other Items sheet (filter by item_type='Washer')
+      if (workbook.SheetNames.includes('Other Items')) {
+        const otherData = XLSX.utils.sheet_to_json(workbook.Sheets['Other Items']);
+        let washerCount = 0;
+        
+        for (const row of otherData) {
+          if (row['Item Type'] !== 'Washer') continue;
+          
+          // Allow washers without Storage ID - they'll have box_id = null
+          let boxId = null;
+          if (row['Storage ID']) {
+            boxId = boxMap[row['Storage ID']];
+            // If Storage ID exists but box not found, skip this washer
+            if (!boxId) continue;
+          }
+          
+          // Parse washer size (Size format: ID x OD x Thickness, e.g., "14x8x0.3")
+          let inner_diameter = null, outer_diameter = null, thickness = null;
+          let washerSubtype = '';
+          
+          if (row['Size']) {
+            const size = String(row['Size']).trim();
+            // Try pattern: ID x OD x Thickness (correct order)
+            const match = size.toUpperCase().match(/(\d+\.?\d*)\s*[Xx]\s*(\d+\.?\d*)\s*[Xx]\s*(\d+\.?\d*)/);
+            if (match) {
+              inner_diameter = parseFloat(match[1]);
+              outer_diameter = parseFloat(match[2]);
+              thickness = parseFloat(match[3]);
+            }
+            
+            // Only use Size as subtype if it's NOT a dimension
+            if (!size.match(/^[\d.]+[x][\d.]+/)) {
+              washerSubtype = size;
+            }
+          }
+          
+          await WasherBearing.create({
+            category: 'Washer',
+            name: row['Name'] || 'Washer',
+            inner_diameter: inner_diameter,
+            outer_diameter: outer_diameter,
+            thickness: thickness,
+            subtype: washerSubtype,
+            material: '',
+            quantity: row['Amount'] || row['Quantity'] || 0,
+            box_id: boxId,
+            category_id: wbCategory,
+            notes: row['Notes'] || ''
+          });
+          washerCount++;
+        }
+        console.log(`  ✓ Imported ${washerCount} washers into washers_bearings table`);
+      }
+    } else {
+      console.log('  ⚠️  "Washers & Bearings" category not found in database');
+    }
+
+    // 10. Import RC Parts into the dedicated rc_parts table
     console.log('\n🏎️  Importing RC Parts...');
     const rcSheet = workbook.Sheets['RC Parts'];
     const rcData = XLSX.utils.sheet_to_json(rcSheet);
@@ -424,7 +530,7 @@ async function importExcelData() {
     }
     console.log(`  ✓ Imported ${rcData.length} RC parts`);
 
-    // 10. Import Oils/Pastes
+    // 11. Import Oils/Pastes
     console.log('\n🛢️  Importing Oils & Pastes...');
     const oilsSheet = workbook.Sheets['OilsPAstes'];
     const oilsData = XLSX.utils.sheet_to_json(oilsSheet);

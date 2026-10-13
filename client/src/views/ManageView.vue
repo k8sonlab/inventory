@@ -58,22 +58,22 @@
           <span>{{ value }}</span>
           <button @click="deleteNutFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
         </div>
-      </div>    </div>    <div class="manage-section manage-section--bearing">
-      <h2>🔄 Bearing Fields</h2>
+      </div>    </div>    <div class="manage-section manage-section--washer-bearing">
+      <h2>⚪ Washers & Bearings Fields</h2>
       <div class="manage-form">
-        <select v-model="selectedBearingFieldType" placeholder="Select bearing field">
-          <option value="">-- Select Bearing Field --</option>
-          <option value="bearing_type">Type</option>
-          <option value="bearing_seal_type">Seal Type</option>
+        <select v-model="selectedWasherBearingFieldType" placeholder="Select washer/bearing field">
+          <option value="">-- Select Washer/Bearing Field --</option>
+          <option value="washer_bearing_subtype">Subtype</option>
+          <option value="washer_bearing_material">Material</option>
         </select>
-        <input v-model="newBearingFieldValue" placeholder="New value" />
-        <button @click="addBearingFieldValue" class="btn-primary" :disabled="!selectedBearingFieldType || !newBearingFieldValue">Add Value</button>
+        <input v-model="newWasherBearingFieldValue" placeholder="New value" />
+        <button @click="addWasherBearingFieldValue" class="btn-primary" :disabled="!selectedWasherBearingFieldType || !newWasherBearingFieldValue">Add Value</button>
       </div>
-      <div v-if="selectedBearingFieldType" class="manage-list">
-        <div v-if="bearingFieldValuesList.length === 0" class="empty-state">No values for this field</div>
-        <div v-for="value in bearingFieldValuesList" :key="value" class="manage-item">
+      <div v-if="selectedWasherBearingFieldType" class="manage-list">
+        <div v-if="washerBearingFieldValuesList.length === 0" class="empty-state">No values for this field</div>
+        <div v-for="value in washerBearingFieldValuesList" :key="value" class="manage-item">
           <span>{{ value }}</span>
-          <button @click="deleteBearingFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
+          <button @click="deleteWasherBearingFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
         </div>      </div>    </div>
 
     <div class="manage-section manage-section--battery">
@@ -103,7 +103,8 @@
           <option value="screw_thread_type">Screw Thread Type</option>
           <option value="nut_type">Nut Type</option>
           <option value="nut_color">Nut Color</option>
-          <option value="bearing_sealing_type">Bearing Sealing Type</option>
+          <option value="washer_bearing_subtype">Washer/Bearing Subtype</option>
+          <option value="washer_bearing_material">Washer/Bearing Material</option>
           <option value="oil_paste_company">Oil/Paste Company</option>
           <option value="oil_paste_type">Oil/Paste Type</option>
           <option value="battery_type">Battery Type</option>
@@ -160,9 +161,9 @@ export default {
     const newNutFieldValue = ref('');
     const nutFieldValuesList = ref([]);
 
-    const selectedBearingFieldType = ref('');
-    const newBearingFieldValue = ref('');
-    const bearingFieldValuesList = ref([]);
+    const selectedWasherBearingFieldType = ref('');
+    const newWasherBearingFieldValue = ref('');
+    const washerBearingFieldValuesList = ref([]);
 
     const selectedBatteryFieldType = ref('');
     const newBatteryFieldValue = ref('');
@@ -357,40 +358,40 @@ export default {
       }
     };
 
-    watch(() => selectedBearingFieldType.value, () => {
-      loadBearingFieldValues();
+    watch(() => selectedWasherBearingFieldType.value, () => {
+      loadWasherBearingFieldValues();
     });
 
-    const loadBearingFieldValues = async () => {
-      if (selectedBearingFieldType.value) {
+    const loadWasherBearingFieldValues = async () => {
+      if (selectedWasherBearingFieldType.value) {
         try {
-          const response = await enumsService.getValues(selectedBearingFieldType.value);
-          bearingFieldValuesList.value = response.data || [];
+          const response = await enumsService.getValues(selectedWasherBearingFieldType.value);
+          washerBearingFieldValuesList.value = response.data || [];
         } catch (error) {
-          console.error('Error loading bearing field values:', error);
+          console.error('Error loading washer/bearing field values:', error);
         }
       }
     };
 
-    const addBearingFieldValue = async () => {
-      if (!selectedBearingFieldType.value || !newBearingFieldValue.value.trim()) return;
+    const addWasherBearingFieldValue = async () => {
+      if (!selectedWasherBearingFieldType.value || !newWasherBearingFieldValue.value.trim()) return;
       try {
-        await enumsService.createValue(selectedBearingFieldType.value, newBearingFieldValue.value);
-        newBearingFieldValue.value = '';
-        loadBearingFieldValues();
+        await enumsService.createValue(selectedWasherBearingFieldType.value, newWasherBearingFieldValue.value);
+        newWasherBearingFieldValue.value = '';
+        loadWasherBearingFieldValues();
       } catch (error) {
-        console.error('Error adding bearing field value:', error);
+        console.error('Error adding washer/bearing field value:', error);
         alert('Error adding value: ' + error.message);
       }
     };
 
-    const deleteBearingFieldValue = async (value) => {
+    const deleteWasherBearingFieldValue = async (value) => {
       if (confirm('Delete this value?')) {
         try {
-          await enumsService.deleteValue(selectedBearingFieldType.value, value);
-          loadBearingFieldValues();
+          await enumsService.deleteValue(selectedWasherBearingFieldType.value, value);
+          loadWasherBearingFieldValues();
         } catch (error) {
-          console.error('Error deleting bearing field value:', error);
+          console.error('Error deleting washer/bearing field value:', error);
           alert('Error deleting value: ' + error.message);
         }
       }
@@ -454,9 +455,9 @@ export default {
       selectedNutFieldType,
       newNutFieldValue,
       nutFieldValuesList,
-      selectedBearingFieldType,
-      newBearingFieldValue,
-      bearingFieldValuesList,
+      selectedWasherBearingFieldType,
+      newWasherBearingFieldValue,
+      washerBearingFieldValuesList,
       selectedBatteryFieldType,
       newBatteryFieldValue,
       batteryFieldValuesList,
@@ -471,9 +472,9 @@ export default {
       loadNutFieldValues,
       addNutFieldValue,
       deleteNutFieldValue,
-      loadBearingFieldValues,
-      addBearingFieldValue,
-      deleteBearingFieldValue,
+      loadWasherBearingFieldValues,
+      addWasherBearingFieldValue,
+      deleteWasherBearingFieldValue,
       loadBatteryFieldValues,
       addBatteryFieldValue,
       deleteBatteryFieldValue

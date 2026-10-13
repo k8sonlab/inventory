@@ -7,7 +7,12 @@ async function runMigrations() {
   try {
     console.log('\n🔄 Running database migrations...');
     
-    await initializeDatabase();
+    // Initialize database if not already done
+    try {
+      getDatabase();
+    } catch (e) {
+      await initializeDatabase();
+    }
     const isPG = isPostgresDB();
 
     if (isPG) {
@@ -137,6 +142,23 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
         
+        `CREATE TABLE IF NOT EXISTS washers_bearings (
+          id UUID PRIMARY KEY,
+          category VARCHAR(50) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          inner_diameter DECIMAL(10, 3),
+          outer_diameter DECIMAL(10, 3),
+          thickness DECIMAL(10, 3),
+          subtype VARCHAR(255),
+          material VARCHAR(255),
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
         `CREATE TABLE IF NOT EXISTS oil_pastes (
           id UUID PRIMARY KEY,
           name VARCHAR(255),
@@ -171,7 +193,9 @@ async function runMigrations() {
         `CREATE TABLE IF NOT EXISTS other_items (
           id UUID PRIMARY KEY,
           item_type VARCHAR(255),
+          name VARCHAR(255),
           size VARCHAR(255),
+          company VARCHAR(255),
           quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
@@ -206,7 +230,12 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`,
         `CREATE INDEX IF NOT EXISTS idx_other_items_box ON other_items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_other_items_item_type ON other_items(item_type)`,
-        `CREATE INDEX IF NOT EXISTS idx_other_items_category ON other_items(category_id)`
+        `CREATE INDEX IF NOT EXISTS idx_other_items_category ON other_items(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_category ON washers_bearings(category)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_subtype ON washers_bearings(subtype)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_box ON washers_bearings(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_category_id ON washers_bearings(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_od ON washers_bearings(outer_diameter)`
       ];
 
       for (const statement of statements) {
@@ -324,6 +353,23 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        `CREATE TABLE IF NOT EXISTS washers_bearings (
+          id TEXT PRIMARY KEY,
+          category TEXT NOT NULL,
+          name TEXT NOT NULL,
+          inner_diameter REAL,
+          outer_diameter REAL,
+          thickness REAL,
+          subtype TEXT,
+          material TEXT,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
         `CREATE TABLE IF NOT EXISTS oil_pastes (
           id TEXT PRIMARY KEY,
           name TEXT,
@@ -358,7 +404,9 @@ async function runMigrations() {
         `CREATE TABLE IF NOT EXISTS other_items (
           id TEXT PRIMARY KEY,
           item_type TEXT,
+          name TEXT,
           size TEXT,
+          company TEXT,
           quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
@@ -393,19 +441,50 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`,
         `CREATE INDEX IF NOT EXISTS idx_other_items_box ON other_items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_other_items_item_type ON other_items(item_type)`,
-        `CREATE INDEX IF NOT EXISTS idx_other_items_category ON other_items(category_id)`
+        `CREATE INDEX IF NOT EXISTS idx_other_items_category ON other_items(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_category ON washers_bearings(category)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_subtype ON washers_bearings(subtype)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_box ON washers_bearings(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_category_id ON washers_bearings(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_washers_bearings_od ON washers_bearings(outer_diameter)`
       ];
 
       await execMultiple(statements);
     }
 
+    // Clean up legacy Bearings category and old bearing items
+    try {
+      // Find and delete old Bearings category and its items
+      const bearingsResult = await query('SELECT id FROM categories WHERE name = ?', ['Bearings']);
+      if (bearingsResult && bearingsResult.length > 0) {
+        const bearingsCatId = bearingsResult[0].id;
+        // Delete items with old Bearings category
+        await exec('DELETE FROM items WHERE category_id = ? AND item_type = ?', [bearingsCatId, 'Bearings']);
+        // Delete the Bearings category itself
+        await exec('DELETE FROM categories WHERE id = ?', [bearingsCatId]);
+        console.log('🧹 Cleaned up legacy Bearings category');
+      }
+    } catch (e) {
+      // Category might not exist, that's okay
+    }
+
     console.log('✅ Database migrations completed successfully\n');
-    await closeDatabase();
+    // Don't close database here - let the caller (index.js) manage database lifecycle
   } catch (error) {
     console.error('❌ Migration error:', error.message);
-    await closeDatabase();
-    process.exit(1);
+    // Only close database if running migrations standalone
+    if (import.meta.url === `file://${process.argv[1]}`) {
+      await closeDatabase();
+      process.exit(1);
+    } else {
+      throw error;
+    }
   }
 }
 
-runMigrations();
+export { runMigrations };
+
+// Only run migrations if this file is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runMigrations();
+}

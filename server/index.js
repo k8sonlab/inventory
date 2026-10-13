@@ -3,6 +3,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { initializeDatabase, closeDatabase } from './db.js';
+import { runMigrations } from './migrations/run.js';
 
 // Import routes
 import itemRoutes from './routes/items.js';
@@ -41,6 +42,7 @@ app.use((err, req, res, next) => {
 async function start() {
   try {
     await initializeDatabase();
+    await runMigrations();
     app.listen(port, () => {
       console.log(`Inventory API listening on port ${port}`);
     });

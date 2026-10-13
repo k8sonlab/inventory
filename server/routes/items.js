@@ -1,5 +1,5 @@
 import express from 'express';
-import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem } from '../models/index.js';
+import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem, WasherBearing } from '../models/index.js';
 
 const router = express.Router();
 
@@ -38,6 +38,8 @@ router.post('/', async (req, res) => {
       item = await Screw.create(req.body);
     } else if (req.body.source_type === 'nut' || req.body.item_type === 'Nuts') {
       item = await Nut.create(req.body);
+    } else if (req.body.source_type === 'washer_bearing' || req.body.item_type === 'Washers & Bearings') {
+      item = await WasherBearing.create(req.body);
     } else if (req.body.source_type === 'bearing' || req.body.item_type === 'Bearings') {
       item = await Bearing.create(req.body);
     } else if (req.body.source_type === 'oil_paste' || req.body.item_type === 'Oils/Pastes') {
@@ -65,6 +67,8 @@ router.put('/:id', async (req, res) => {
       item = await Screw.update(req.params.id, req.body);
     } else if (req.body.source_type === 'nut' || req.body.item_type === 'Nuts') {
       item = await Nut.update(req.params.id, req.body);
+    } else if (req.body.source_type === 'washer_bearing' || req.body.item_type === 'Washers & Bearings') {
+      item = await WasherBearing.update(req.params.id, req.body);
     } else if (req.body.source_type === 'bearing' || req.body.item_type === 'Bearings') {
       item = await Bearing.update(req.params.id, req.body);
     } else if (req.body.source_type === 'oil_paste' || req.body.item_type === 'Oils/Pastes') {
@@ -95,6 +99,8 @@ router.delete('/:id', async (req, res) => {
       item = await Screw.delete(req.params.id);
     } else if (req.body.source_type === 'nut' || req.body.item_type === 'Nuts') {
       item = await Nut.delete(req.params.id);
+    } else if (req.body.source_type === 'washer_bearing' || req.body.item_type === 'Washers & Bearings') {
+      item = await WasherBearing.delete(req.params.id);
     } else if (req.body.source_type === 'bearing' || req.body.item_type === 'Bearings') {
       item = await Bearing.delete(req.params.id);
     } else if (req.body.source_type === 'oil_paste' || req.body.item_type === 'Oils/Pastes') {
