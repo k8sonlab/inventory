@@ -89,6 +89,84 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
         
+        `CREATE TABLE IF NOT EXISTS nuts (
+          id UUID PRIMARY KEY,
+          name VARCHAR(255),
+          size VARCHAR(255),
+          type VARCHAR(255),
+          color VARCHAR(255),
+          has_washer BOOLEAN DEFAULT false,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
+        `CREATE TABLE IF NOT EXISTS bearings (
+          id UUID PRIMARY KEY,
+          name VARCHAR(255),
+          type VARCHAR(255),
+          seal_type VARCHAR(255),
+          id_inner DECIMAL(10, 3),
+          od DECIMAL(10, 3),
+          width DECIMAL(10, 3),
+          flanged BOOLEAN DEFAULT false,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+                `CREATE TABLE IF NOT EXISTS bearings (
+          id UUID PRIMARY KEY,
+          name VARCHAR(255),
+          type VARCHAR(255),
+          id_inner DECIMAL(10, 3),
+          od DECIMAL(10, 3),
+          width DECIMAL(10, 3),
+          flanged BOOLEAN DEFAULT false,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
+        `CREATE TABLE IF NOT EXISTS oil_pastes (
+          id UUID PRIMARY KEY,
+          name VARCHAR(255),
+          company VARCHAR(255),
+          type VARCHAR(255),
+          characteristic TEXT,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
+        `CREATE TABLE IF NOT EXISTS batteries (
+          id UUID PRIMARY KEY,
+          size VARCHAR(255),
+          company VARCHAR(255),
+          model VARCHAR(255),
+          type VARCHAR(255),
+          expiration_date DATE,
+          mah INTEGER,
+          rechargeable BOOLEAN DEFAULT FALSE,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)`,
@@ -100,7 +178,19 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_rc_parts_item_code ON rc_parts(item_code)`,
         `CREATE INDEX IF NOT EXISTS idx_screws_box ON screws(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_screws_size ON screws(size)`,
-        `CREATE INDEX IF NOT EXISTS idx_screws_category ON screws(category_id)`
+        `CREATE INDEX IF NOT EXISTS idx_screws_category ON screws(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_nuts_box ON nuts(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_nuts_size ON nuts(size)`,
+        `CREATE INDEX IF NOT EXISTS idx_nuts_category ON nuts(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_bearings_box ON bearings(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_bearings_type ON bearings(type)`,
+        `CREATE INDEX IF NOT EXISTS idx_bearings_category ON bearings(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_oil_pastes_box ON oil_pastes(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_oil_pastes_company ON oil_pastes(company)`,
+        `CREATE INDEX IF NOT EXISTS idx_oil_pastes_type ON oil_pastes(type)`,
+        `CREATE INDEX IF NOT EXISTS idx_batteries_box ON batteries(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_batteries_company ON batteries(company)`,
+        `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`
       ];
 
       for (const statement of statements) {
@@ -185,6 +275,69 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        `CREATE TABLE IF NOT EXISTS nuts (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          size TEXT,
+          type TEXT,
+          color TEXT,
+          has_washer BOOLEAN DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS bearings (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          type TEXT,
+          seal_type TEXT,
+          id_inner REAL,
+          od REAL,
+          width REAL,
+          flanged BOOLEAN DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS oil_pastes (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          company TEXT,
+          type TEXT,
+          characteristic TEXT,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS batteries (
+          id TEXT PRIMARY KEY,
+          size TEXT,
+          company TEXT,
+          model TEXT,
+          type TEXT,
+          expiration_date DATE,
+          mah INTEGER,
+          rechargeable INTEGER DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)`,
@@ -196,7 +349,19 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_rc_parts_item_code ON rc_parts(item_code)`,
         `CREATE INDEX IF NOT EXISTS idx_screws_box ON screws(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_screws_size ON screws(size)`,
-        `CREATE INDEX IF NOT EXISTS idx_screws_category ON screws(category_id)`
+        `CREATE INDEX IF NOT EXISTS idx_screws_category ON screws(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_nuts_box ON nuts(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_nuts_size ON nuts(size)`,
+        `CREATE INDEX IF NOT EXISTS idx_nuts_category ON nuts(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_bearings_box ON bearings(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_bearings_type ON bearings(type)`,
+        `CREATE INDEX IF NOT EXISTS idx_bearings_category ON bearings(category_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_oil_pastes_box ON oil_pastes(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_oil_pastes_company ON oil_pastes(company)`,
+        `CREATE INDEX IF NOT EXISTS idx_oil_pastes_type ON oil_pastes(type)`,
+        `CREATE INDEX IF NOT EXISTS idx_batteries_box ON batteries(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_batteries_company ON batteries(company)`,
+        `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`
       ];
 
       await execMultiple(statements);

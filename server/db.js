@@ -114,7 +114,9 @@ export async function exec(sql, params = []) {
       saveSQLiteDatabase();
       return { changes: 1 };
     } catch (e) {
-      console.error('SQLite exec error:', sql, params, e);
+      console.error('[exec] SQLite exec error:', e.message);
+      console.error('[exec] SQL:', sql);
+      console.error('[exec] Params:', params);
       throw e;
     }
   }

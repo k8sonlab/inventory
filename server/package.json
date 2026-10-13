@@ -9,7 +9,8 @@
     "dev": "nodemon index.js",
     "migrate": "node migrations/run.js",
     "import-excel": "node utils/importExcel.js",
-    "setup": "npm run migrate && npm run import-excel"
+    "setup": "npm run migrate && npm run import-excel",
+    "fix-battery-expiration": "node migrations/fixBatteryExpiration.js"
   },
   "keywords": [
     "inventory",

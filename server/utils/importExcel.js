@@ -1,6 +1,6 @@
 import XLSX from 'xlsx';
 import { initializeDatabase, closeDatabase, isPostgresDB, query, exec } from '../db.js';
-import { Shelf, Box, Category, Item, RCPart, Screw, CatalogEnum } from '../models/index.js';
+import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum } from '../models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -18,6 +18,9 @@ async function importExcelData() {
     console.log(`🗄️  Using ${db} database\n`);
     
     const workbook = XLSX.readFile(filePath);
+    
+    // Debug: Print all sheet names
+    console.log('📋 Available sheets:', Object.keys(workbook.Sheets));
     
     // 1. Import Shelves
     console.log('📚 Importing Shelves...');
@@ -91,7 +94,7 @@ async function importExcelData() {
           'RC Model': 'rc_model',
           'Oil Companies': 'oil_paste_company',
           'Oil Types': 'oil_paste_type',
-          'Battery Sizes': 'battery_type'
+          'Battery Sizes': 'battery_size'
         };
         
         for (const [excelCol, enumType] of Object.entries(enumTypeMap)) {
@@ -110,6 +113,25 @@ async function importExcelData() {
         }
       }
     }
+
+    // Add missing battery enums not in catalog
+    console.log('\n  Adding missing battery enums...');
+    const batteryCompanies = ['Varta', 'Energizer', 'Duracell', 'Rayovac', 'Panasonic', 'Sony'];
+    const batteryModels = ['Max', 'Lithium', 'Heavy Duty', 'Alkaline', 'Eco', 'Plus'];
+    const batteryTypes = ['Lithium', 'Alkaline', 'NiMH', 'Carbon Zinc', 'Silver Oxide', 'Zinc Air'];
+    
+    for (const value of batteryCompanies) {
+      await CatalogEnum.create('battery_company', value);
+    }
+    for (const value of batteryModels) {
+      await CatalogEnum.create('battery_model', value);
+    }
+    for (const value of batteryTypes) {
+      await CatalogEnum.create('battery_type', value);
+    }
+    console.log('  ✓ battery_company: 6 values');
+    console.log('  ✓ battery_model: 6 values');
+    console.log('  ✓ battery_type: 6 values');
 
     // 4. Migrate any legacy RC Parts already sitting in items table
     console.log('\n🧹 Checking for legacy RC Part rows...');
@@ -227,62 +249,118 @@ async function importExcelData() {
       console.log(`  ✓ Imported ${screwCount} screw entries`);
     }
 
-    // 6. Import Nuts
+    // 7. Import Nuts
     console.log('\n⚙️  Importing Nuts...');
     const nutsSheet = workbook.Sheets['Nut'];
-    const nutsData = XLSX.utils.sheet_to_json(nutsSheet);
-    
-    for (const row of nutsData) {
-      if (!row['Storage ID'] || !row['Size']) continue;
+    if (!nutsSheet) {
+      console.log('  ⚠️  "Nut" sheet not found');
+    } else {
+      const nutsData = XLSX.utils.sheet_to_json(nutsSheet);
+      let nutCount = 0;
       
-      const boxId = boxMap[row['Storage ID']];
-      if (!boxId) continue;
+      // Extract unique enum values from nuts data
+      const uniqueSizes = new Set();
+      const uniqueTypes = new Set();
+      const uniqueColors = new Set();
       
-      await Item.create({
-        name: `${row['Size']} ${row['Type']} ${row['Color']}`,
-        item_type: 'Nuts',
-        category_id: categoryMap['Nuts'],
-        box_id: boxId,
-        quantity: row['Amount'] || 0,
-        parameters: {
-          size: row['Size'],
-          type: row['Type'],
-          color: row['Color'],
-          has_washer: row['Washer'] || false
-        }
-      });
+      for (const row of nutsData) {
+        if (row['Size']) uniqueSizes.add(row['Size']);
+        if (row['Type']) uniqueTypes.add(row['Type']);
+        if (row['Color']) uniqueColors.add(row['Color']);
+      }
+      
+      // Create enums from extracted values
+      for (const size of uniqueSizes) {
+        await CatalogEnum.create('nut_size', size);
+      }
+      for (const type of uniqueTypes) {
+        await CatalogEnum.create('nut_type', type);
+      }
+      for (const color of uniqueColors) {
+        await CatalogEnum.create('nut_color', color);
+      }
+      
+      if (uniqueSizes.size > 0) console.log(`  ✓ Nut sizes: ${uniqueSizes.size} values`);
+      if (uniqueTypes.size > 0) console.log(`  ✓ Nut types: ${uniqueTypes.size} values`);
+      if (uniqueColors.size > 0) console.log(`  ✓ Nut colors: ${uniqueColors.size} values`);
+      
+      for (const row of nutsData) {
+        if (!row['Storage ID'] || !row['Size']) continue;
+        
+        const boxId = boxMap[row['Storage ID']];
+        if (!boxId) continue;
+        
+        await Nut.create({
+          name: `${row['Size']} ${row['Type']} ${row['Color']}`,
+          size: row['Size'] || '',
+          type: row['Type'] || '',
+          color: row['Color'] || '',
+          has_washer: row['Washer'] ? true : false,
+          box_id: boxId,
+          category_id: categoryMap['Nuts'],
+          quantity: row['Amount'] || 0,
+          notes: row['Notes'] || ''
+        });
+        nutCount++;
+      }
+      console.log(`  ✓ Imported ${nutCount} nut entries`);
     }
-    console.log(`  ✓ Imported ${nutsData.length} nut entries`);
 
-    // 7. Import Bearings
+    // 8. Import Bearings
     console.log('\n🔄 Importing Bearings...');
     const bearingsSheet = workbook.Sheets['Bearings'];
-    const bearingsData = XLSX.utils.sheet_to_json(bearingsSheet);
-    
-    for (const row of bearingsData) {
-      if (!row['Storage ID']) continue;
+    if (!bearingsSheet) {
+      console.log('  ⚠️  "Bearings" sheet not found');
+    } else {
+      const bearingsData = XLSX.utils.sheet_to_json(bearingsSheet);
+      let bearingCount = 0;
       
-      const boxId = boxMap[row['Storage ID']];
-      if (!boxId) continue;
+      // Extract unique enum values from bearings data
+      const uniqueTypes = new Set();
+      const uniqueSealTypes = new Set();
       
-      await Item.create({
-        name: row['Type'] || 'Bearing',
-        item_type: 'Bearings',
-        category_id: categoryMap['Bearings'],
-        box_id: boxId,
-        quantity: row['Amount'] || 0,
-        notes: '',
-        parameters: {
-          type: row['Notes'] || '',
-          id: row['ID'],
-          od: row['OD'],
-          width: row['Width']
-        }
-      });
+      for (const row of bearingsData) {
+        if (row['Type']) uniqueTypes.add(row['Type']);
+        // Extract seal type from notes
+        if (row['Notes']) uniqueSealTypes.add(row['Notes']);
+      }
+      
+      // Create enums from extracted values
+      for (const type of uniqueTypes) {
+        await CatalogEnum.create('bearing_type', type);
+      }
+      for (const sealType of uniqueSealTypes) {
+        await CatalogEnum.create('bearing_seal_type', sealType);
+      }
+      
+      if (uniqueTypes.size > 0) console.log(`  ✓ Bearing types: ${uniqueTypes.size} values`);
+      if (uniqueSealTypes.size > 0) console.log(`  ✓ Bearing seal types: ${uniqueSealTypes.size} values`);
+      
+      for (const row of bearingsData) {
+        if (!row['Storage ID']) continue;
+        
+        const boxId = boxMap[row['Storage ID']];
+        if (!boxId) continue;
+        
+        await Bearing.create({
+          name: row['Type'] || 'Bearing',
+          type: row['Type'] || '',
+          seal_type: row['Notes'] || '',
+          id_inner: row['ID'] ? parseFloat(row['ID']) : null,
+          od: row['OD'] ? parseFloat(row['OD']) : null,
+          width: row['Width'] ? parseFloat(row['Width']) : null,
+          flanged: row['Flanged'] ? true : false,
+          box_id: boxId,
+          category_id: categoryMap['Bearings'],
+          quantity: row['Amount'] || 0,
+          notes: ''
+        });
+        bearingCount++;
+      }
+      console.log(`  ✓ Imported ${bearingCount} bearing entries`);
     }
-    console.log(`  ✓ Imported ${bearingsData.length} bearing entries`);
 
-    // 8. Import Other Items
+    // 9. Import Other Items
     console.log('\n📦 Importing Other Items...');
     const otherSheet = workbook.Sheets['Other Items'];
     const otherData = XLSX.utils.sheet_to_json(otherSheet);
@@ -342,18 +420,15 @@ async function importExcelData() {
       const boxId = boxMap[row['Storage ID']];
       if (!boxId) continue;
       
-      await Item.create({
-        name: `${row['Company']} ${row['Type']} ${row['Weight/Type']}`,
-        item_type: 'Oils/Pastes',
+      await OilPaste.create({
+        name: `${row['Company']} ${row['Type']}`,
+        company: row['Company'],
+        type: row['Type'],
+        characteristic: row['Weight/Type'] || row['ML'] || '',
         category_id: categoryMap['Oils/Pastes'],
         box_id: boxId,
         quantity: row['Amount'] || 0,
-        parameters: {
-          company: row['Company'],
-          type: row['Type'],
-          weight_type: row['Weight/Type'],
-          ml: row['ML']
-        }
+        notes: ''
       });
     }
     console.log(`  ✓ Imported ${oilsData.length} oils/pastes`);
@@ -363,29 +438,46 @@ async function importExcelData() {
     const batteriesSheet = workbook.Sheets['Batteries'];
     const batteriesData = XLSX.utils.sheet_to_json(batteriesSheet);
     
-    // Use first shelf as default for batteries (they need to be stored somewhere)
-    const defaultShelves = Object.values(shelfMap);
-    const defaultShelf = defaultShelves[0];
-    let batteryBox = await Box.getByStorageId('BATTERIES-01');
-    if (!batteryBox && defaultShelf) {
-      batteryBox = await Box.create(defaultShelf, 'BATTERIES-01', 'Batteries Box', 'box');
-    }
-    
-    if (batteryBox) {
+    // Get first available box as default for batteries
+    const firstBoxId = Object.values(boxMap)[0];
+    if (!firstBoxId) {
+      console.log('  ❌ No boxes found - skipping batteries');
+    } else {
       for (const row of batteriesData) {
-        if (!row['Type'] || !row['Model']) continue;
+        // Map columns from Excel - Excel has: Type, Amount, Model, Expiration
+        const size = row['Type'] || '';  // "Type" in Excel is actually battery size (AA, AAA, 9V, etc)
+        const model = row['Model'] || '';
+        const amount = row['Amount'] || 0;
         
-        await Item.create({
-          name: `${row['Type']} - ${row['Model']}`,
-          item_type: 'Batteries',
-          category_id: categoryMap['Batteries'],
-          box_id: batteryBox.id,
-          quantity: row['Amount'] || 0,
-          parameters: {
-            type: row['Type'],
-            model: row['Model'],
-            expiration: row['Expiration']
+        if (!size) continue;
+        
+        // Convert Excel date serial number to ISO date string
+        let expirationDate = null;
+        if (row['Expiration']) {
+          const excelDateNum = Number(row['Expiration']);
+          if (!isNaN(excelDateNum)) {
+            // Excel serial number: days since 1/1/1900
+            const jsDate = new Date((excelDateNum - 25569) * 86400 * 1000);
+            expirationDate = jsDate.toISOString().split('T')[0]; // Convert to YYYY-MM-DD
           }
+        }
+        
+        // Use default battery box if storage ID not provided
+        const boxId = row['Storage ID'] ? boxMap[row['Storage ID']] : firstBoxId;
+        if (!boxId) continue;
+        
+        await Battery.create({
+          size: size,
+          company: '', // Not provided in Excel
+          model: model,
+          type: '', // Chemistry not provided in Excel
+          expiration_date: expirationDate,
+          mah: null, // Not provided in Excel
+          rechargeable: false, // Default to non-rechargeable
+          category_id: categoryMap['Batteries'],
+          box_id: boxId,
+          quantity: amount,
+          notes: ''
         });
       }
       console.log(`  ✓ Imported ${batteriesData.length} battery entries`);

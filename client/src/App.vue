@@ -10,12 +10,14 @@
         <button v-for="cat in categories" :key="cat.id" @click="navigateTo('items', cat.id)" :class="{ active: currentView === 'items' && selectedCategory === cat.id }" class="category-btn">
           {{ cat.name }}
         </button>
+        <button @click="navigateTo('locations')" :class="{ active: currentView === 'locations' }">Manage Locations</button>
         <button @click="navigateTo('manage')" :class="{ active: currentView === 'manage' }">Manage</button>
       </nav>
     </header>
 
     <main>
       <ItemsView v-if="currentView === 'items'" :selectedCategory="selectedCategory" />
+      <LocationsManageView v-if="currentView === 'locations'" />
       <ManageView v-if="currentView === 'manage'" />
     </main>
   </div>
@@ -23,6 +25,7 @@
 
 <script>
 import ItemsView from './views/ItemsView.vue';
+import LocationsManageView from './views/LocationsManageView.vue';
 import ManageView from './views/ManageView.vue';
 import { ref, onMounted } from 'vue';
 import { categoriesService } from './services/api.js';
@@ -30,6 +33,7 @@ import { categoriesService } from './services/api.js';
 export default {
   components: {
     ItemsView,
+    LocationsManageView,
     ManageView
   },
   setup() {
@@ -56,7 +60,9 @@ export default {
       const hash = window.location.hash.replace(/^#\/?/, '');
       if (!hash) return { view: 'items', categoryId: null };
 
-      if (hash.startsWith('manage')) {
+      if (hash.startsWith('locations')) {
+        return { view: 'locations', categoryId: null };
+      } else if (hash.startsWith('manage')) {
         return { view: 'manage', categoryId: null };
       } else if (hash.startsWith('items/')) {
         const slug = hash.split('/')[1];
@@ -72,7 +78,9 @@ export default {
       currentView.value = view;
       selectedCategory.value = categoryId;
       
-      if (view === 'manage') {
+      if (view === 'locations') {
+        window.location.hash = '#/locations';
+      } else if (view === 'manage') {
         window.location.hash = '#/manage';
       } else if (categoryId) {
         const slug = getCategorySlugById(categoryId);
@@ -199,5 +207,29 @@ main {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.btn-icon:hover {
+  background: #ddd;
+  transform: scale(1.1);
+}
+
+.btn-icon:active {
+  transform: scale(0.95);
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="manage-view">
-    <div class="manage-section">      <h2>🏎️ RC Parts Fields</h2>
+    <div class="manage-section manage-section--rc">      <h2>🏎️ RC Parts Fields</h2>
       <div class="manage-form">
         <select v-model="selectedRCFieldType" placeholder="Select RC field">
           <option value="">-- Select RC Field --</option>
@@ -14,11 +14,11 @@
         <div v-if="rcFieldValuesList.length === 0" class="empty-state">No values for this field</div>
         <div v-for="value in rcFieldValuesList" :key="value" class="manage-item">
           <span>{{ value }}</span>
-          <button @click="deleteRCFieldValue(value)" class="btn-danger btn-small">Delete</button>
+          <button @click="deleteRCFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
         </div>
       </div>
     </div>
-    <div class="manage-section">
+    <div class="manage-section manage-section--screw">
       <h2>🔩 Screw Fields</h2>
       <div class="manage-form">
         <select v-model="selectedScrewFieldType" placeholder="Select screw field">
@@ -37,11 +37,64 @@
         <div v-if="screwFieldValuesList.length === 0" class="empty-state">No values for this field</div>
         <div v-for="value in screwFieldValuesList" :key="value" class="manage-item">
           <span>{{ value }}</span>
-          <button @click="deleteScrewFieldValue(value)" class="btn-danger btn-small">Delete</button>
+          <button @click="deleteScrewFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
         </div>
       </div>
-    </div>
-    <div class="manage-section">      <h2>� Parameter Options</h2>
+    </div>    <div class="manage-section manage-section--nut">
+      <h2>⚙️ Nut Fields</h2>
+      <div class="manage-form">
+        <select v-model="selectedNutFieldType" placeholder="Select nut field">
+          <option value="">-- Select Nut Field --</option>
+          <option value="nut_size">Size</option>
+          <option value="nut_type">Type</option>
+          <option value="nut_color">Color</option>
+        </select>
+        <input v-model="newNutFieldValue" placeholder="New value" />
+        <button @click="addNutFieldValue" class="btn-primary" :disabled="!selectedNutFieldType || !newNutFieldValue">Add Value</button>
+      </div>
+      <div v-if="selectedNutFieldType" class="manage-list">
+        <div v-if="nutFieldValuesList.length === 0" class="empty-state">No values for this field</div>
+        <div v-for="value in nutFieldValuesList" :key="value" class="manage-item">
+          <span>{{ value }}</span>
+          <button @click="deleteNutFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
+        </div>
+      </div>    </div>    <div class="manage-section manage-section--bearing">
+      <h2>🔄 Bearing Fields</h2>
+      <div class="manage-form">
+        <select v-model="selectedBearingFieldType" placeholder="Select bearing field">
+          <option value="">-- Select Bearing Field --</option>
+          <option value="bearing_type">Type</option>
+          <option value="bearing_seal_type">Seal Type</option>
+        </select>
+        <input v-model="newBearingFieldValue" placeholder="New value" />
+        <button @click="addBearingFieldValue" class="btn-primary" :disabled="!selectedBearingFieldType || !newBearingFieldValue">Add Value</button>
+      </div>
+      <div v-if="selectedBearingFieldType" class="manage-list">
+        <div v-if="bearingFieldValuesList.length === 0" class="empty-state">No values for this field</div>
+        <div v-for="value in bearingFieldValuesList" :key="value" class="manage-item">
+          <span>{{ value }}</span>
+          <button @click="deleteBearingFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
+        </div>      </div>    </div>
+
+    <div class="manage-section manage-section--battery">
+      <h2>🔋 Battery Fields</h2>
+      <div class="manage-form">
+        <select v-model="selectedBatteryFieldType" placeholder="Select battery field">
+          <option value="">-- Select Battery Field --</option>
+          <option value="battery_size">Size</option>
+          <option value="battery_company">Company</option>
+          <option value="battery_model">Model</option>
+          <option value="battery_type">Type</option>
+        </select>
+        <input v-model="newBatteryFieldValue" placeholder="New value" />
+        <button @click="addBatteryFieldValue" class="btn-primary" :disabled="!selectedBatteryFieldType || !newBatteryFieldValue">Add Value</button>
+      </div>
+      <div v-if="selectedBatteryFieldType" class="manage-list">
+        <div v-if="batteryFieldValuesList.length === 0" class="empty-state">No values for this field</div>
+        <div v-for="value in batteryFieldValuesList" :key="value" class="manage-item">
+          <span>{{ value }}</span>
+          <button @click="deleteBatteryFieldValue(value)" class="btn-icon" title="Delete">🗑️</button>
+        </div>      </div>    </div>    <div class="manage-section">      <h2>� Parameter Options</h2>
       <div class="manage-form">
         <select v-model="selectedEnumType" placeholder="Select parameter type">
           <option value="">-- Select Parameter Type --</option>
@@ -63,52 +116,7 @@
         <div v-if="enumValuesList.length === 0" class="empty-state">No options for this type</div>
         <div v-for="value in enumValuesList" :key="value" class="manage-item">
           <span>{{ value }}</span>
-          <button @click="deleteEnumValue(value)" class="btn-danger btn-small">Delete</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="manage-section">
-      <h2>�📚 Shelves</h2>
-      <div class="manage-form">
-        <input v-model="newShelf.shelf_code" placeholder="Shelf Code (e.g., S01, T21)" />
-        <input v-model="newShelf.location" placeholder="Location (e.g., Brown Kallax)" />
-        <input v-model="newShelf.notes" placeholder="Notes" />
-        <button @click="addShelf" class="btn-primary">Add Shelf</button>
-      </div>
-      <div class="manage-list">
-        <div v-if="shelves.length === 0" class="empty-state">No shelves</div>
-        <div v-for="shelf in shelves" :key="shelf.id" class="manage-item">
-          <div class="item-content">
-            <strong>{{ shelf.shelf_code }}</strong>
-            <small>{{ shelf.location }}</small>
-            <span v-if="shelf.notes" class="note">{{ shelf.notes }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="manage-section">
-      <h2>📦 Boxes</h2>
-      <div class="manage-form">
-        <select v-model="newBox.shelf_id" placeholder="Select Shelf">
-          <option value="">Select Shelf</option>
-          <option v-for="shelf in shelves" :key="shelf.id" :value="shelf.id">
-            {{ shelf.shelf_code }} - {{ shelf.location }}
-          </option>
-        </select>
-        <input v-model="newBox.storage_id" placeholder="Storage ID (e.g., S01-B01)" />
-        <input v-model="newBox.box_name" placeholder="Box Name" />
-        <button @click="addBox" class="btn-primary">Add Box</button>
-      </div>
-      <div class="manage-list">
-        <div v-if="boxes.length === 0" class="empty-state">No boxes</div>
-        <div v-for="box in boxes" :key="box.id" class="manage-item">
-          <div class="item-content">
-            <strong>{{ box.storage_id }}</strong>
-            <small>{{ box.box_name }} (Shelf: {{ box.shelf_code }})</small>
-          </div>
-          <button @click="deleteBox(box.id)" class="btn-danger btn-small">Delete</button>
+          <button @click="deleteEnumValue(value)" class="btn-icon" title="Delete">🗑️</button>
         </div>
       </div>
     </div>
@@ -123,7 +131,7 @@
         <div v-if="categories.length === 0" class="empty-state">No categories</div>
         <div v-for="cat in categories" :key="cat.id" class="manage-item">
           <span>{{ cat.name }}</span>
-          <button @click="deleteCategory(cat.id)" class="btn-danger btn-small">Delete</button>
+          <button @click="deleteCategory(cat.id)" class="btn-icon" title="Delete">🗑️</button>
         </div>
       </div>
     </div>
@@ -132,16 +140,12 @@
 
 <script>
 import { ref, onMounted, watch } from 'vue';
-import { categoriesService, locationsService, enumsService } from '../services/api.js';
+import { categoriesService, enumsService } from '../services/api.js';
 
 export default {
   setup() {
     const categories = ref([]);
-    const shelves = ref([]);
-    const boxes = ref([]);
     const newCategory = ref('');
-    const newShelf = ref({ shelf_code: '', location: '', notes: '' });
-    const newBox = ref({ shelf_id: '', storage_id: '', box_name: '', box_type: '' });
     const selectedEnumType = ref('');
     const newEnumValue = ref('');
     const enumValuesList = ref([]);
@@ -152,30 +156,24 @@ export default {
     const newScrewFieldValue = ref('');
     const screwFieldValuesList = ref([]);
 
+    const selectedNutFieldType = ref('');
+    const newNutFieldValue = ref('');
+    const nutFieldValuesList = ref([]);
+
+    const selectedBearingFieldType = ref('');
+    const newBearingFieldValue = ref('');
+    const bearingFieldValuesList = ref([]);
+
+    const selectedBatteryFieldType = ref('');
+    const newBatteryFieldValue = ref('');
+    const batteryFieldValuesList = ref([]);
+
     const loadCategories = async () => {
       try {
         const response = await categoriesService.getAll();
         categories.value = response.data || [];
       } catch (error) {
         console.error('Error loading categories:', error);
-      }
-    };
-
-    const loadShelves = async () => {
-      try {
-        const response = await locationsService.getShelves();
-        shelves.value = response.data || [];
-      } catch (error) {
-        console.error('Error loading shelves:', error);
-      }
-    };
-
-    const loadBoxes = async () => {
-      try {
-        const response = await locationsService.getBoxes();
-        boxes.value = response.data || [];
-      } catch (error) {
-        console.error('Error loading boxes:', error);
       }
     };
 
@@ -199,51 +197,6 @@ export default {
         } catch (error) {
           console.error('Error deleting category:', error);
           alert('Error deleting category: ' + error.message);
-        }
-      }
-    };
-
-    const addShelf = async () => {
-      if (!newShelf.value.shelf_code.trim() || !newShelf.value.location.trim()) return;
-      try {
-        await locationsService.createShelf(
-          newShelf.value.shelf_code,
-          newShelf.value.location,
-          newShelf.value.notes
-        );
-        newShelf.value = { shelf_code: '', location: '', notes: '' };
-        loadShelves();
-      } catch (error) {
-        console.error('Error adding shelf:', error);
-        alert('Error adding shelf: ' + error.message);
-      }
-    };
-
-    const addBox = async () => {
-      if (!newBox.value.shelf_id || !newBox.value.storage_id.trim() || !newBox.value.box_name.trim()) return;
-      try {
-        await locationsService.createBox(
-          newBox.value.shelf_id,
-          newBox.value.storage_id,
-          newBox.value.box_name,
-          newBox.value.box_type
-        );
-        newBox.value = { shelf_id: '', storage_id: '', box_name: '', box_type: '' };
-        loadBoxes();
-      } catch (error) {
-        console.error('Error adding box:', error);
-        alert('Error adding box: ' + error.message);
-      }
-    };
-
-    const deleteBox = async (id) => {
-      if (confirm('Delete this box?')) {
-        try {
-          await locationsService.deleteBox(id);
-          loadBoxes();
-        } catch (error) {
-          console.error('Error deleting box:', error);
-          alert('Error deleting box: ' + error.message);
         }
       }
     };
@@ -330,6 +283,10 @@ export default {
       loadScrewFieldValues();
     });
 
+    watch(() => selectedNutFieldType.value, () => {
+      loadNutFieldValues();
+    });
+
     const loadScrewFieldValues = async () => {
       if (selectedScrewFieldType.value) {
         try {
@@ -337,6 +294,17 @@ export default {
           screwFieldValuesList.value = response.data || [];
         } catch (error) {
           console.error('Error loading screw field values:', error);
+        }
+      }
+    };
+
+    const loadNutFieldValues = async () => {
+      if (selectedNutFieldType.value) {
+        try {
+          const response = await enumsService.getValues(selectedNutFieldType.value);
+          nutFieldValuesList.value = response.data || [];
+        } catch (error) {
+          console.error('Error loading nut field values:', error);
         }
       }
     };
@@ -353,6 +321,18 @@ export default {
       }
     };
 
+    const addNutFieldValue = async () => {
+      if (!selectedNutFieldType.value || !newNutFieldValue.value.trim()) return;
+      try {
+        await enumsService.createValue(selectedNutFieldType.value, newNutFieldValue.value);
+        newNutFieldValue.value = '';
+        loadNutFieldValues();
+      } catch (error) {
+        console.error('Error adding nut field value:', error);
+        alert('Error adding value: ' + error.message);
+      }
+    };
+
     const deleteScrewFieldValue = async (value) => {
       if (confirm('Delete this value?')) {
         try {
@@ -365,19 +345,103 @@ export default {
       }
     };
 
+    const deleteNutFieldValue = async (value) => {
+      if (confirm('Delete this value?')) {
+        try {
+          await enumsService.deleteValue(selectedNutFieldType.value, value);
+          loadNutFieldValues();
+        } catch (error) {
+          console.error('Error deleting nut field value:', error);
+          alert('Error deleting value: ' + error.message);
+        }
+      }
+    };
+
+    watch(() => selectedBearingFieldType.value, () => {
+      loadBearingFieldValues();
+    });
+
+    const loadBearingFieldValues = async () => {
+      if (selectedBearingFieldType.value) {
+        try {
+          const response = await enumsService.getValues(selectedBearingFieldType.value);
+          bearingFieldValuesList.value = response.data || [];
+        } catch (error) {
+          console.error('Error loading bearing field values:', error);
+        }
+      }
+    };
+
+    const addBearingFieldValue = async () => {
+      if (!selectedBearingFieldType.value || !newBearingFieldValue.value.trim()) return;
+      try {
+        await enumsService.createValue(selectedBearingFieldType.value, newBearingFieldValue.value);
+        newBearingFieldValue.value = '';
+        loadBearingFieldValues();
+      } catch (error) {
+        console.error('Error adding bearing field value:', error);
+        alert('Error adding value: ' + error.message);
+      }
+    };
+
+    const deleteBearingFieldValue = async (value) => {
+      if (confirm('Delete this value?')) {
+        try {
+          await enumsService.deleteValue(selectedBearingFieldType.value, value);
+          loadBearingFieldValues();
+        } catch (error) {
+          console.error('Error deleting bearing field value:', error);
+          alert('Error deleting value: ' + error.message);
+        }
+      }
+    };
+
+    watch(() => selectedBatteryFieldType.value, () => {
+      loadBatteryFieldValues();
+    });
+
+    const loadBatteryFieldValues = async () => {
+      if (selectedBatteryFieldType.value) {
+        try {
+          const response = await enumsService.getValues(selectedBatteryFieldType.value);
+          batteryFieldValuesList.value = response.data || [];
+        } catch (error) {
+          console.error('Error loading battery field values:', error);
+        }
+      }
+    };
+
+    const addBatteryFieldValue = async () => {
+      if (!selectedBatteryFieldType.value || !newBatteryFieldValue.value.trim()) return;
+      try {
+        await enumsService.createValue(selectedBatteryFieldType.value, newBatteryFieldValue.value);
+        newBatteryFieldValue.value = '';
+        loadBatteryFieldValues();
+      } catch (error) {
+        console.error('Error adding battery field value:', error);
+        alert('Error adding value: ' + error.message);
+      }
+    };
+
+    const deleteBatteryFieldValue = async (value) => {
+      if (confirm('Delete this value?')) {
+        try {
+          await enumsService.deleteValue(selectedBatteryFieldType.value, value);
+          loadBatteryFieldValues();
+        } catch (error) {
+          console.error('Error deleting battery field value:', error);
+          alert('Error deleting value: ' + error.message);
+        }
+      }
+    };
+
     onMounted(() => {
       loadCategories();
-      loadShelves();
-      loadBoxes();
     });
 
     return {
       categories,
-      shelves,
-      boxes,
       newCategory,
-      newShelf,
-      newBox,
       selectedEnumType,
       newEnumValue,
       enumValuesList,
@@ -387,17 +451,32 @@ export default {
       selectedScrewFieldType,
       newScrewFieldValue,
       screwFieldValuesList,
+      selectedNutFieldType,
+      newNutFieldValue,
+      nutFieldValuesList,
+      selectedBearingFieldType,
+      newBearingFieldValue,
+      bearingFieldValuesList,
+      selectedBatteryFieldType,
+      newBatteryFieldValue,
+      batteryFieldValuesList,
       addCategory,
       deleteCategory,
-      addShelf,
-      addBox,
-      deleteBox,
       addEnumValue,
       deleteEnumValue,
       addRCFieldValue,
       deleteRCFieldValue,
       addScrewFieldValue,
-      deleteScrewFieldValue
+      deleteScrewFieldValue,
+      loadNutFieldValues,
+      addNutFieldValue,
+      deleteNutFieldValue,
+      loadBearingFieldValues,
+      addBearingFieldValue,
+      deleteBearingFieldValue,
+      loadBatteryFieldValues,
+      addBatteryFieldValue,
+      deleteBatteryFieldValue
     };
   }
 };
@@ -415,6 +494,31 @@ export default {
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.manage-section--rc {
+  background: #e3f2fd !important;
+  border-left: 5px solid #1976d2 !important;
+}
+
+.manage-section--screw {
+  background: #fff3e0 !important;
+  border-left: 5px solid #f57c00 !important;
+}
+
+.manage-section--nut {
+  background: #e8f5e9 !important;
+  border-left: 5px solid #388e3c !important;
+}
+
+.manage-section--bearing {
+  background: #f3e5f5 !important;
+  border-left: 5px solid #7b1fa2 !important;
+}
+
+.manage-section--battery {
+  background: #fff9e6 !important;
+  border-left: 5px solid #fbc02d !important;
 }
 
 .manage-section h2 {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+// Use environment variable if available, fallback to relative path for dev
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -49,7 +50,10 @@ export const locationsService = {
   getBoxes() {
     return api.get('/locations/boxes');
   },
-  createBox(shelf_id, storage_id, box_name, box_type = '') {
+  getBoxesByShelf(shelf_id) {
+    return api.get(`/locations/boxes/shelf/${shelf_id}`);
+  },
+  createBox(shelf_id, storage_id = null, box_name = '', box_type = '') {
     return api.post('/locations/boxes', { shelf_id, storage_id, box_name, box_type });
   },
   deleteBox(id) {

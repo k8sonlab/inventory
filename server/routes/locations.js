@@ -33,6 +33,15 @@ router.get('/boxes', async (req, res) => {
   }
 });
 
+router.get('/boxes/shelf/:shelf_id', async (req, res) => {
+  try {
+    const boxes = await Box.getByShelfId(req.params.shelf_id);
+    res.json(boxes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/boxes', async (req, res) => {
   try {
     const { shelf_id, storage_id, box_name, box_type } = req.body;

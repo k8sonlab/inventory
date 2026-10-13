@@ -60,7 +60,67 @@
             <th v-if="filterCategory && isCurrentCategoryScrews()" @click="handleSort('material')" class="sortable" :class="{ active: sortBy === 'material' }">
               Material {{ sortBy === 'material' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
-            <template v-if="!isCurrentCategoryScrews()">
+            <th v-if="filterCategory && isCurrentCategoryNuts()" @click="handleSort('size')" class="sortable" :class="{ active: sortBy === 'size' }">
+              Size {{ sortBy === 'size' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryNuts()" @click="handleSort('type')" class="sortable" :class="{ active: sortBy === 'type' }">
+              Type {{ sortBy === 'type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryNuts()" @click="handleSort('color')" class="sortable" :class="{ active: sortBy === 'color' }">
+              Color {{ sortBy === 'color' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryNuts()" @click="handleSort('has_washer')" class="sortable" :class="{ active: sortBy === 'has_washer' }">
+              Has Washer {{ sortBy === 'has_washer' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBearings()" @click="handleSort('type')" class="sortable" :class="{ active: sortBy === 'type' }">
+              Type {{ sortBy === 'type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBearings()" @click="handleSort('seal_type')" class="sortable" :class="{ active: sortBy === 'seal_type' }">
+              Seal Type {{ sortBy === 'seal_type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBearings()" @click="handleSort('id_inner')" class="sortable" :class="{ active: sortBy === 'id_inner' }">
+              ID (Inner) {{ sortBy === 'id_inner' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBearings()" @click="handleSort('od')" class="sortable" :class="{ active: sortBy === 'od' }">
+              OD {{ sortBy === 'od' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBearings()" @click="handleSort('width')" class="sortable" :class="{ active: sortBy === 'width' }">
+              Width {{ sortBy === 'width' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBearings()" @click="handleSort('flanged')" class="sortable" :class="{ active: sortBy === 'flanged' }">
+              Flanged {{ sortBy === 'flanged' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryOilPastes()" @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
+              Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryOilPastes()" @click="handleSort('type')" class="sortable" :class="{ active: sortBy === 'type' }">
+              Type {{ sortBy === 'type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryOilPastes()" @click="handleSort('characteristic')" class="sortable" :class="{ active: sortBy === 'characteristic' }">
+              Characteristic {{ sortBy === 'characteristic' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('size')" class="sortable" :class="{ active: sortBy === 'size' }">
+              Size {{ sortBy === 'size' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
+              Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('model')" class="sortable" :class="{ active: sortBy === 'model' }">
+              Model {{ sortBy === 'model' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('type')" class="sortable" :class="{ active: sortBy === 'type' }">
+              Type {{ sortBy === 'type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('mah')" class="sortable" :class="{ active: sortBy === 'mah' }">
+              mAh {{ sortBy === 'mah' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('rechargeable')" class="sortable" :class="{ active: sortBy === 'rechargeable' }">
+              Rechargeable {{ sortBy === 'rechargeable' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('expiration_date')" class="sortable" :class="{ active: sortBy === 'expiration_date' }">
+              Expiration {{ sortBy === 'expiration_date' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <template v-if="!isCurrentCategoryScrews() && !isCurrentCategoryNuts() && !isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries()">
               <th @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
                 Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
               </th>
@@ -74,7 +134,7 @@
                 Name {{ sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
               </th>
             </template>
-            <th v-for="col in getAllDisplayColumns()" :key="col">
+            <th v-if="!isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries()" v-for="col in getAllDisplayColumns()" :key="col">
               {{ getColumnLabel(col) }}
             </th>
             <th @click="handleSort('storage')" class="sortable" :class="{ active: sortBy === 'storage' }">
@@ -88,7 +148,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in paginatedItems()" :key="item.id" class="item-row" :class="{ 'rc-part': item.source_type === 'rc_part', 'screw': item.source_type === 'screw' }">
+          <tr v-for="item in paginatedItems()" :key="item.id" class="item-row" :class="{ 'rc-part': item.source_type === 'rc_part', 'screw': item.source_type === 'screw', 'nut': item.source_type === 'nut', 'bearing': item.source_type === 'bearing', 'oil-paste': item.source_type === 'oil_paste', 'battery': item.source_type === 'battery' }">
             <template v-if="filterCategory && isCurrentCategoryScrews()">
               <td class="size">{{ item.size || '-' }}</td>
               <td class="length">{{ item.length || '-' }}</td>
@@ -98,14 +158,44 @@
               <td class="color">{{ item.color || '-' }}</td>
               <td class="material">{{ item.material || '-' }}</td>
             </template>
+            <template v-else-if="filterCategory && isCurrentCategoryNuts()">
+              <td class="size">{{ item.size || '-' }}</td>
+              <td class="type">{{ item.type || '-' }}</td>
+              <td class="color">{{ item.color || '-' }}</td>
+              <td class="has-washer">{{ item.has_washer ? '🟢' : '⚪' }}</td>
+            </template>
+            <template v-else-if="filterCategory && isCurrentCategoryBearings()">
+              <td class="type">{{ item.type || '-' }}</td>
+              <td class="seal-type">{{ item.seal_type || '-' }}</td>
+              <td class="id-inner">{{ item.id_inner || '-' }}</td>
+              <td class="od">{{ item.od || '-' }}</td>
+              <td class="width">{{ item.width || '-' }}</td>
+              <td class="flanged">{{ item.flanged ? '🟢' : '⚪' }}</td>
+            </template>
+            <template v-else-if="filterCategory && isCurrentCategoryOilPastes()">
+              <td class="company">{{ item.company || '-' }}</td>
+              <td class="type">{{ item.type || '-' }}</td>
+              <td class="characteristic">{{ item.characteristic || '-' }}</td>
+            </template>
+            <template v-else-if="filterCategory && isCurrentCategoryBatteries()">
+              <td class="size">{{ item.size || '-' }}</td>
+              <td class="company">{{ item.company || '-' }}</td>
+              <td class="model">{{ item.model || '-' }}</td>
+              <td class="type">{{ item.type || '-' }}</td>
+              <td class="mah">{{ item.mah ? item.mah + ' mAh' : '-' }}</td>
+              <td class="rechargeable">{{ item.rechargeable ? '🟢' : '⚪' }}</td>
+              <td class="expiration-date" :class="getExpirationStatusClass(item.expiration_date)">
+                {{ formatExpirationDate(item.expiration_date) }}
+              </td>
+            </template>
             <template v-else>
               <td class="company">{{ item.display_company || '-' }}</td>
               <td class="model">{{ item.display_model || '-' }}</td>
               <td class="code">{{ item.display_code || '-' }}</td>
               <td class="item-name">{{ item.display_name || item.name || '-' }}</td>
             </template>
-            <td v-for="col in getAllDisplayColumns()" :key="col" class="param-cell">
-              {{ item.source_type === 'rc_part' || item.source_type === 'screw' ? '-' : (parseParameters(item.parameters)[col] || '-') }}
+            <td v-if="!isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries()" v-for="col in getAllDisplayColumns()" :key="col" class="param-cell">
+              {{ item.source_type === 'rc_part' || item.source_type === 'screw' || item.source_type === 'nut' ? '-' : (parseParameters(item.parameters)[col] || '-') }}
             </td>
             <td class="storage">{{ item.storage_id || item.box_name || '-' }}</td>
             <td class="quantity">{{ item.quantity }}</td>
@@ -117,8 +207,8 @@
               </div>
             </td>
             <td class="actions">
-              <button @click="() => editItem(item)" class="btn-small btn-edit">Edit</button>
-              <button @click="deleteItem(item.id)" class="btn-small btn-delete">Delete</button>
+              <button @click="() => editItem(item)" class="btn-icon" title="Edit">✏️</button>
+              <button @click="deleteItem(item.id)" class="btn-icon" title="Delete">🗑️</button>
             </td>
           </tr>
         </tbody>
@@ -189,7 +279,7 @@
             </select>
           </div>
 
-          <div v-if="formData.item_type !== 'Screws' && formData.item_type !== 'RC Parts'" class="form-group">
+          <div v-if="formData.item_type !== 'Screws' && formData.item_type !== 'Nuts' && formData.item_type !== 'RC Parts'" class="form-group">
             <label>Category</label>
             <select v-model="formData.category_id">
               <option value="">-- No Category --</option>
@@ -260,6 +350,159 @@
             </div>
           </div>
 
+          <div v-if="formData.item_type === 'Nuts'" class="nut-fields">
+            <div class="form-group">
+              <label>Size</label>
+              <select v-model="formData.size">
+                <option value="">-- Select Size --</option>
+                <option v-for="value in enumOptions['nut_size'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select v-model="formData.type">
+                <option value="">-- Select Type --</option>
+                <option v-for="value in enumOptions['nut_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Color</label>
+              <select v-model="formData.color">
+                <option value="">-- Select Color --</option>
+                <option v-for="value in enumOptions['nut_color'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" v-model="formData.has_washer" />
+                Has Washer
+              </label>
+            </div>
+          </div>
+
+          <div v-if="formData.item_type === 'Bearings'" class="bearing-fields">
+            <div class="form-group">
+              <label>Type</label>
+              <select v-model="formData.type">
+                <option value="">-- Select Type --</option>
+                <option v-for="value in enumOptions['bearing_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Seal Type</label>
+              <select v-model="formData.seal_type">
+                <option value="">-- Select Seal Type --</option>
+                <option v-for="value in enumOptions['bearing_seal_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ID (Inner Diameter)</label>
+              <input v-model.number="formData.id_inner" type="number" step="0.001" placeholder="Inner diameter" />
+            </div>
+            <div class="form-group">
+              <label>OD (Outer Diameter)</label>
+              <input v-model.number="formData.od" type="number" step="0.001" placeholder="Outer diameter" />
+            </div>
+            <div class="form-group">
+              <label>Width</label>
+              <input v-model.number="formData.width" type="number" step="0.001" placeholder="Width" />
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" v-model="formData.flanged" />
+                Flanged
+              </label>
+            </div>
+          </div>
+
+          <div v-if="formData.item_type === 'Oils/Pastes'" class="oil-paste-fields">
+            <div class="form-group">
+              <label>Company</label>
+              <select v-model="formData.company">
+                <option value="">-- Select Company --</option>
+                <option v-for="value in enumOptions['oil_paste_company'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select v-model="formData.type">
+                <option value="">-- Select Type --</option>
+                <option v-for="value in enumOptions['oil_paste_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Characteristic</label>
+              <input v-model="formData.characteristic" type="text" placeholder="e.g., Graphite, Light Oil, Heavy Grease, etc." />
+            </div>
+          </div>
+
+          <div v-if="formData.item_type === 'Batteries'" class="battery-fields">
+            <div class="form-group">
+              <label>Size</label>
+              <select v-model="formData.size">
+                <option value="">-- Select Size --</option>
+                <option v-for="value in enumOptions['battery_size'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Company</label>
+              <select v-model="formData.company">
+                <option value="">-- Select Company --</option>
+                <option v-for="value in enumOptions['battery_company'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Model</label>
+              <select v-model="formData.model">
+                <option value="">-- Select Model --</option>
+                <option v-for="value in enumOptions['battery_model'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select v-model="formData.type">
+                <option value="">-- Select Type --</option>
+                <option v-for="value in enumOptions['battery_type'] || []" :key="value" :value="value">
+                  {{ value }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Expiration Date</label>
+              <input v-model="formData.expiration_date" type="date" />
+            </div>
+            <div class="form-group">
+              <label>Capacity (mAh)</label>
+              <input v-model.number="formData.mah" type="number" placeholder="e.g., 2000" />
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input v-model="formData.rechargeable" type="checkbox" />
+                Rechargeable
+              </label>
+            </div>
+          </div>
+
           <div v-if="formData.item_type === 'RC Parts'" class="rc-part-fields">
             <div class="form-group">
               <label>Company</label>
@@ -285,9 +528,24 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div v-if="formData.item_type !== 'Batteries'" class="form-group">
             <label>Item Name *</label>
             <input v-model="formData.name" type="text" placeholder="Item name" required />
+          </div>
+
+          <div class="form-group">
+            <label>Storage / Box Location *</label>
+            <select v-model="formData.box_id" required>
+              <option value="">-- Select Storage Box --</option>
+              <option v-for="box in boxes" :key="box.id" :value="box.id">
+                {{ box.storage_id }} - {{ box.box_name }} ({{ box.shelf_code }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Quantity</label>
+            <input v-model.number="formData.quantity" type="number" min="0" placeholder="Quantity" />
           </div>
 
           <div class="form-group">
@@ -296,7 +554,7 @@
           </div>
 
           <!-- Dynamic Parameters based on Item Type -->
-          <div v-if="parameterDefinitions.length > 0" class="form-section">
+          <div v-if="parameterDefinitions.length > 0 && formData.item_type !== 'Nuts' && formData.item_type !== 'Bearings' && formData.item_type !== 'Oils/Pastes' && formData.item_type !== 'Batteries'" class="form-section">
             <label class="section-title">📋 Item Parameters</label>
             <div v-for="param in parameterDefinitions" :key="param.key" class="form-group">
               <label>{{ param.label }}</label>
@@ -326,7 +584,7 @@
           </div>
 
           <!-- Display existing parameters in edit mode -->
-          <div v-else-if="editingItem && formData.parameters && Object.keys(formData.parameters).length > 0" class="form-group">
+          <div v-else-if="editingItem && formData.item_type !== 'Nuts' && formData.item_type !== 'Bearings' && formData.item_type !== 'Oils/Pastes' && formData.item_type !== 'Batteries' && formData.parameters && Object.keys(formData.parameters).length > 0" class="form-group">
             <label>📋 Parameters</label>
             <div class="parameters-display">
               <div v-for="(value, key) in parseParameters(formData.parameters)" :key="key" class="param-item">
@@ -347,7 +605,7 @@
 
 <script>
 import { ref, onMounted, watch, computed } from 'vue';
-import { itemsService, categoriesService, enumsService } from '../services/api.js';
+import { itemsService, categoriesService, enumsService, locationsService } from '../services/api.js';
 
 // Parameter definitions for each item type
 // Types: 'text', 'number', 'date', 'checkbox', 'select' (dropdown)
@@ -411,8 +669,16 @@ export default {
       head_type: '',
       drive_type: '',
       thread_type: '',
+      type: '',
       color: '',
       material: '',
+      has_washer: false,
+      id_inner: null,
+      od: null,
+      width: null,
+      flanged: false,
+      seal_type: '',
+      characteristic: '',
       category_id: '',
       box_id: '',
       quantity: 0,
@@ -420,6 +686,70 @@ export default {
       parameters: {}
     });
     const slugify = (value = '') => value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    
+    // Helper function to convert Excel serial date number to Date object
+    const excelDateToJSDate = (excelDate) => {
+      if (!excelDate) return null;
+      // Excel serial number: days since 1/1/1900
+      // JavaScript: ms since 1/1/1970
+      const excelDateNum = Number(excelDate);
+      if (isNaN(excelDateNum)) return null;
+      const jsDate = new Date((excelDateNum - 25569) * 86400 * 1000);
+      return jsDate;
+    };
+
+    // Format expiration date for display
+    const formatExpirationDate = (dateValue) => {
+      if (!dateValue) return '-';
+      let date;
+      if (typeof dateValue === 'string') {
+        if (dateValue.match(/^\d+$/)) {
+          // Excel serial number
+          date = excelDateToJSDate(dateValue);
+        } else {
+          // ISO date string or other format
+          date = new Date(dateValue);
+        }
+      } else if (typeof dateValue === 'number') {
+        date = excelDateToJSDate(dateValue);
+      } else {
+        date = dateValue;
+      }
+      
+      if (!date || isNaN(date.getTime())) return '-';
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+
+    // Get expiration status class for styling
+    const getExpirationStatusClass = (dateValue) => {
+      if (!dateValue) return '';
+      let date;
+      if (typeof dateValue === 'string') {
+        if (dateValue.match(/^\d+$/)) {
+          date = excelDateToJSDate(dateValue);
+        } else {
+          date = new Date(dateValue);
+        }
+      } else if (typeof dateValue === 'number') {
+        date = excelDateToJSDate(dateValue);
+      } else {
+        date = dateValue;
+      }
+      
+      if (!date || isNaN(date.getTime())) return '';
+      
+      const today = new Date();
+      const threeMonthsFromNow = new Date();
+      threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+      
+      if (date < today) {
+        return 'expired';
+      } else if (date < threeMonthsFromNow) {
+        return 'expiring-soon';
+      }
+      return '';
+    };
+
     const parameterDefinitions = ref([]);
     const enumOptions = ref({}); // Store enum options: { enum_type: [values] }
     const currentPage = ref(1);
@@ -448,6 +778,15 @@ export default {
       }
     };
 
+    const loadBoxes = async () => {
+      try {
+        const response = await locationsService.getBoxes();
+        boxes.value = response.data || [];
+      } catch (error) {
+        console.error('Error loading boxes:', error);
+      }
+    };
+
     const loadEnumOptions = async (enum_types) => {
       try {
         for (const enum_type of enum_types) {
@@ -463,6 +802,14 @@ export default {
 
     const updateParameterFields = async () => {
       const itemType = formData.value.item_type;
+      
+      // Nuts don't use parameters
+      if (itemType === 'Nuts') {
+        parameterDefinitions.value = [];
+        formData.value.parameters = {};
+        return;
+      }
+      
       const defs = PARAMETER_DEFINITIONS[itemType] || [];
       parameterDefinitions.value = defs;
       
@@ -494,6 +841,12 @@ export default {
         await loadEnumOptions(['rc_company', 'rc_model']);
       } else if (formData.value.item_type === 'Screws') {
         await loadEnumOptions(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
+      } else if (formData.value.item_type === 'Nuts') {
+        await loadEnumOptions(['nut_size', 'nut_type', 'nut_color']);
+      } else if (formData.value.item_type === 'Bearings') {
+        await loadEnumOptions(['bearing_type', 'bearing_seal_type']);
+      } else if (formData.value.item_type === 'Oils/Pastes') {
+        await loadEnumOptions(['oil_paste_company', 'oil_paste_type']);
       }
     });
 
@@ -514,10 +867,15 @@ export default {
 
     const openCategory = (categoryId) => {
       filterCategory.value = categoryId;
-      sortBy.value = 'company';
+      // Set default sort by size for batteries, company for others
+      const category = categories.value.find(cat => cat.id === categoryId);
+      if (category && category.name.toLowerCase().includes('batter')) {
+        sortBy.value = 'size';
+      } else {
+        sortBy.value = 'company';
+      }
       sortOrder.value = 'asc';
       currentPage.value = 1;
-      const category = categories.value.find(cat => cat.id === categoryId);
       if (category) {
         window.location.hash = `#/items/${slugify(category.name)}`;
       }
@@ -561,6 +919,9 @@ export default {
         box_id: '',
         quantity: 0,
         notes: '',
+        expiration_date: '',
+        mah: null,
+        rechargeable: false,
         parameters: {}
       };
       parameterDefinitions.value = [];
@@ -610,6 +971,27 @@ export default {
         } else if (sortBy.value === 'material') {
           aVal = (a.material || '').toLowerCase();
           bVal = (b.material || '').toLowerCase();
+        } else if (sortBy.value === 'type') {
+          aVal = (a.type || '').toLowerCase();
+          bVal = (b.type || '').toLowerCase();
+        } else if (sortBy.value === 'seal_type') {
+          aVal = (a.seal_type || '').toLowerCase();
+          bVal = (b.seal_type || '').toLowerCase();
+        } else if (sortBy.value === 'has_washer') {
+          aVal = a.has_washer ? 1 : 0;
+          bVal = b.has_washer ? 1 : 0;
+        } else if (sortBy.value === 'id_inner') {
+          aVal = a.id_inner || 0;
+          bVal = b.id_inner || 0;
+        } else if (sortBy.value === 'od') {
+          aVal = a.od || 0;
+          bVal = b.od || 0;
+        } else if (sortBy.value === 'width') {
+          aVal = a.width || 0;
+          bVal = b.width || 0;
+        } else if (sortBy.value === 'flanged') {
+          aVal = a.flanged ? 1 : 0;
+          bVal = b.flanged ? 1 : 0;
         } else if (sortBy.value === 'name') {
           aVal = (a.display_name || a.name || '').toLowerCase();
           bVal = (b.display_name || b.name || '').toLowerCase();
@@ -628,6 +1010,16 @@ export default {
         } else if (sortBy.value === 'storage') {
           aVal = (a.storage_id || a.box_name || '').toLowerCase();
           bVal = (b.storage_id || b.box_name || '').toLowerCase();
+        } else if (sortBy.value === 'expiration_date') {
+          // Convert to comparable dates
+          aVal = a.expiration_date ? new Date(a.expiration_date).getTime() : 0;
+          bVal = b.expiration_date ? new Date(b.expiration_date).getTime() : 0;
+        } else if (sortBy.value === 'mah') {
+          aVal = a.mah || 0;
+          bVal = b.mah || 0;
+        } else if (sortBy.value === 'rechargeable') {
+          aVal = a.rechargeable ? 1 : 0;
+          bVal = b.rechargeable ? 1 : 0;
         }
         
         if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
@@ -654,6 +1046,10 @@ export default {
     };
 
     const getDisplayColumns = (itemType) => {
+      // Screws, Nuts, Bearings, and Oil Pastes use dedicated columns, not parameters
+      if (itemType === 'Screws' || itemType === 'Nuts' || itemType === 'Bearings' || itemType === 'Oils/Pastes') {
+        return [];
+      }
       const defs = PARAMETER_DEFINITIONS[itemType] || [];
       return defs.filter(d => d.display).map(d => d.key);
     };
@@ -701,6 +1097,66 @@ export default {
       return categoryItems.some(i => i.source_type === 'screw');
     };
 
+    const isCurrentCategoryNuts = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name first
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && currentCategory.name.toLowerCase().includes('nut')) {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are nuts
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'nut');
+    };
+
+    const isCurrentCategoryBearings = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name first
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && currentCategory.name.toLowerCase().includes('bearing')) {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are bearings
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'bearing');
+    };
+
+    const isCurrentCategoryOilPastes = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name first
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && (currentCategory.name.toLowerCase().includes('oil') || currentCategory.name.toLowerCase().includes('paste'))) {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are oil pastes
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'oil_paste');
+    };
+
+    const isCurrentCategoryBatteries = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name first
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && currentCategory.name.toLowerCase().includes('batter')) {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are batteries
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'battery');
+    };
+
     const hasSearchMatch = (item, field) => {
       if (!searchQuery.value) return false;
       const query = searchQuery.value.toLowerCase();
@@ -708,6 +1164,8 @@ export default {
       if (field === 'notes') {
         return item.notes && item.notes.toLowerCase().includes(query);
       } else if (field === 'parameters') {
+        // Nuts don't have parameters
+        if (item.source_type === 'nut') return false;
         const params = parseParameters(item.parameters);
         return Object.values(params).some(val => 
           val && String(val).toLowerCase().includes(query)
@@ -728,8 +1186,20 @@ export default {
         length: item.length || '',
         head_type: item.head_type || '',
         drive_type: item.drive_type || '',
+        thread_type: item.thread_type || '',
+        type: item.type || '',
         color: item.color || '',
         material: item.material || '',
+        has_washer: item.has_washer || false,
+        id_inner: item.id_inner || null,
+        od: item.od || null,
+        width: item.width || null,
+        flanged: item.flanged || false,
+        seal_type: item.seal_type || '',
+        characteristic: item.characteristic || '',
+        expiration_date: item.expiration_date || '',
+        mah: item.mah || null,
+        rechargeable: item.rechargeable ? true : false,
         category_id: item.category_id || '',
         box_id: item.box_id || '',
         quantity: item.quantity || 0,
@@ -742,6 +1212,14 @@ export default {
         await loadEnumOptions(['rc_company', 'rc_model']);
       } else if (formData.value.item_type === 'Screws') {
         await loadEnumOptions(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
+      } else if (formData.value.item_type === 'Nuts') {
+        await loadEnumOptions(['nut_size', 'nut_type', 'nut_color']);
+      } else if (formData.value.item_type === 'Bearings') {
+        await loadEnumOptions(['bearing_type', 'bearing_seal_type']);
+      } else if (formData.value.item_type === 'Oils/Pastes') {
+        await loadEnumOptions(['oil_paste_company', 'oil_paste_type']);
+      } else if (formData.value.item_type === 'Batteries') {
+        await loadEnumOptions(['battery_size', 'battery_company', 'battery_model', 'battery_type']);
       }
       showAddModal.value = true;
     };
@@ -762,6 +1240,55 @@ export default {
           // Auto-assign Screws category
           const screwsCategory = categories.value.find(c => c.name === 'Screws');
           if (screwsCategory) payload.category_id = screwsCategory.id;
+        } else if (payload.item_type === 'Nuts') {
+          payload.size = payload.size || '';
+          payload.type = payload.type || '';
+          payload.color = payload.color || '';
+          payload.has_washer = payload.has_washer || false;
+          payload.source_type = 'nut';
+          // Nuts don't use parameters
+          delete payload.parameters;
+          // Auto-assign Nuts category
+          const nutsCategory = categories.value.find(c => c.name === 'Nuts');
+          if (nutsCategory) payload.category_id = nutsCategory.id;
+        } else if (payload.item_type === 'Bearings') {
+          payload.type = payload.type || '';
+          payload.id_inner = payload.id_inner || null;
+          payload.od = payload.od || null;
+          payload.width = payload.width || null;
+          payload.flanged = payload.flanged || false;
+          payload.source_type = 'bearing';
+          // Bearings don't use parameters
+          delete payload.parameters;
+          // Auto-assign Bearings category
+          const bearingsCategory = categories.value.find(c => c.name === 'Bearings');
+          if (bearingsCategory) payload.category_id = bearingsCategory.id;
+        } else if (payload.item_type === 'Oils/Pastes') {
+          payload.company = payload.company || '';
+          payload.type = payload.type || '';
+          payload.characteristic = payload.characteristic || '';
+          payload.source_type = 'oil_paste';
+          // Oil Pastes don't use parameters
+          delete payload.parameters;
+          // Auto-assign Oil Pastes category
+          const oilPastesCategory = categories.value.find(c => c.name.toLowerCase().includes('oil') || c.name.toLowerCase().includes('paste'));
+          if (oilPastesCategory) payload.category_id = oilPastesCategory.id;
+        } else if (payload.item_type === 'Batteries') {
+          payload.size = payload.size || '';
+          payload.company = payload.company || '';
+          payload.model = payload.model || '';
+          payload.type = payload.type || '';
+          payload.expiration_date = payload.expiration_date || null;
+          payload.mah = payload.mah || null;
+          payload.rechargeable = payload.rechargeable ? 1 : 0;
+          payload.source_type = 'battery';
+          // Auto-generate battery name from components
+          payload.name = [payload.size, payload.company, payload.model].filter(Boolean).join(' ') || 'Battery';
+          // Batteries don't use parameters
+          delete payload.parameters;
+          // Auto-assign Batteries category
+          const batteriesCategory = categories.value.find(c => c.name === 'Batteries');
+          if (batteriesCategory) payload.category_id = batteriesCategory.id;
         } else if (payload.item_type === 'RC Parts') {
           payload.company = payload.company || '';
           payload.model = payload.model || '';
@@ -807,6 +1334,7 @@ export default {
       }
       loadItems();
       loadCategories();
+      loadBoxes();
     });
 
     watch(() => props.selectedCategory, (newVal) => {
@@ -853,6 +1381,10 @@ export default {
       getColumnLabel,
       hasSearchMatch,
       isCurrentCategoryScrews,
+      isCurrentCategoryNuts,
+      isCurrentCategoryBearings,
+      isCurrentCategoryOilPastes,
+      isCurrentCategoryBatteries,
       currentPage,
       totalPages,
       paginatedItems,
@@ -862,7 +1394,10 @@ export default {
       handleSort,
       editItem,
       saveItem,
-      deleteItem
+      deleteItem,
+      formatExpirationDate,
+      getExpirationStatusClass,
+      excelDateToJSDate
     };
   }
 };
@@ -989,11 +1524,92 @@ export default {
 }
 
 .item-row.rc-part {
-  background: #f0f7ff;
+  background: #e3f2fd;
 }
 
 .item-row.rc-part:hover {
-  background: #e6f2ff;
+  background: #bbdefb;
+}
+
+.item-row.screw {
+  background: #fff3e0;
+}
+
+.item-row.screw:hover {
+  background: #ffe0b2;
+}
+
+.item-row.nut {
+  background: #e8f5e9;
+}
+
+.item-row.nut:hover {
+  background: #c8e6c9;
+}
+
+.item-row.bearing {
+  background: #f3e5f5;
+}
+
+.item-row.bearing:hover {
+  background: #e1bee7;
+}
+
+.item-row.oil-paste {
+  background: #f0f4c3;
+}
+
+.item-row.oil-paste:hover {
+  background: #e6f0a8;
+}
+
+.item-row.battery {
+  background: #e8d4f1;
+}
+
+.item-row.battery:hover {
+  background: #dfc4ea;
+}
+
+/* Expiration date styling */
+.expiration-date {
+  font-weight: 500;
+}
+
+.expiration-date.expired {
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.expiration-date.expiring-soon {
+  background-color: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+
+/* Table cell alignment and spacing */
+.items-table td.size,
+.items-table td.company,
+.items-table td.model,
+.items-table td.type,
+.items-table td.mah,
+.items-table td.rechargeable,
+.items-table td.expiration-date {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.items-table td.rechargeable {
+  text-align: center;
+}
+
+.items-table th {
+  padding: 1rem 0.5rem;
+  text-align: left;
 }
 
 .items-table th.sortable {
@@ -1424,6 +2040,16 @@ export default {
   gap: 0.5rem;
   cursor: pointer;
   font-weight: normal;
+}
+
+.checkbox-group {
+  margin-bottom: 1rem;
+}
+
+.checkbox-group .checkbox-label input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+  cursor: pointer;
 }
 
 .checkbox-label input[type="checkbox"] {
