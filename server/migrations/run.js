@@ -16,6 +16,7 @@ async function runMigrations() {
         `CREATE TABLE IF NOT EXISTS categories (
           id UUID PRIMARY KEY,
           name VARCHAR(255) NOT NULL UNIQUE,
+          sort_order INTEGER,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
         
@@ -167,6 +168,18 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
         
+        `CREATE TABLE IF NOT EXISTS other_items (
+          id UUID PRIMARY KEY,
+          item_type VARCHAR(255),
+          size VARCHAR(255),
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)`,
@@ -190,7 +203,10 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_oil_pastes_type ON oil_pastes(type)`,
         `CREATE INDEX IF NOT EXISTS idx_batteries_box ON batteries(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_batteries_company ON batteries(company)`,
-        `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`
+        `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`,
+        `CREATE INDEX IF NOT EXISTS idx_other_items_box ON other_items(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_other_items_item_type ON other_items(item_type)`,
+        `CREATE INDEX IF NOT EXISTS idx_other_items_category ON other_items(category_id)`
       ];
 
       for (const statement of statements) {
@@ -202,6 +218,7 @@ async function runMigrations() {
         `CREATE TABLE IF NOT EXISTS categories (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL UNIQUE,
+          sort_order INTEGER,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
 
@@ -338,6 +355,18 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        `CREATE TABLE IF NOT EXISTS other_items (
+          id TEXT PRIMARY KEY,
+          item_type TEXT,
+          size TEXT,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)`,
@@ -361,7 +390,10 @@ async function runMigrations() {
         `CREATE INDEX IF NOT EXISTS idx_oil_pastes_type ON oil_pastes(type)`,
         `CREATE INDEX IF NOT EXISTS idx_batteries_box ON batteries(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_batteries_company ON batteries(company)`,
-        `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`
+        `CREATE INDEX IF NOT EXISTS idx_batteries_size ON batteries(size)`,
+        `CREATE INDEX IF NOT EXISTS idx_other_items_box ON other_items(box_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_other_items_item_type ON other_items(item_type)`,
+        `CREATE INDEX IF NOT EXISTS idx_other_items_category ON other_items(category_id)`
       ];
 
       await execMultiple(statements);

@@ -120,7 +120,19 @@
             <th v-if="filterCategory && isCurrentCategoryBatteries()" @click="handleSort('expiration_date')" class="sortable" :class="{ active: sortBy === 'expiration_date' }">
               Expiration {{ sortBy === 'expiration_date' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
             </th>
-            <template v-if="!isCurrentCategoryScrews() && !isCurrentCategoryNuts() && !isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries()">
+            <th v-if="filterCategory && isCurrentCategoryOtherItems()" @click="handleSort('item_type')" class="sortable" :class="{ active: sortBy === 'item_type' }">
+              Item Type {{ sortBy === 'item_type' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryOtherItems()" @click="handleSort('name')" class="sortable" :class="{ active: sortBy === 'name' }">
+              Name {{ sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryOtherItems()" @click="handleSort('size')" class="sortable" :class="{ active: sortBy === 'size' }">
+              Size {{ sortBy === 'size' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <th v-if="filterCategory && isCurrentCategoryOtherItems()" @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
+              Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+            </th>
+            <template v-if="!isCurrentCategoryScrews() && !isCurrentCategoryNuts() && !isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries() && !isCurrentCategoryOtherItems()">
               <th @click="handleSort('company')" class="sortable" :class="{ active: sortBy === 'company' }">
                 Company {{ sortBy === 'company' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
               </th>
@@ -188,13 +200,19 @@
                 {{ formatExpirationDate(item.expiration_date) }}
               </td>
             </template>
+            <template v-else-if="filterCategory && isCurrentCategoryOtherItems()">
+              <td class="item-type">{{ item.item_type || '-' }}</td>
+              <td class="name">{{ item.name || '-' }}</td>
+              <td class="size">{{ item.size || '-' }}</td>
+              <td class="company">{{ item.company || '-' }}</td>
+            </template>
             <template v-else>
               <td class="company">{{ item.display_company || '-' }}</td>
               <td class="model">{{ item.display_model || '-' }}</td>
               <td class="code">{{ item.display_code || '-' }}</td>
               <td class="item-name">{{ item.display_name || item.name || '-' }}</td>
             </template>
-            <td v-if="!isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries()" v-for="col in getAllDisplayColumns()" :key="col" class="param-cell">
+            <td v-if="!isCurrentCategoryBearings() && !isCurrentCategoryOilPastes() && !isCurrentCategoryBatteries() && !isCurrentCategoryOtherItems()" v-for="col in getAllDisplayColumns()" :key="col" class="param-cell">
               {{ item.source_type === 'rc_part' || item.source_type === 'screw' || item.source_type === 'nut' ? '-' : (parseParameters(item.parameters)[col] || '-') }}
             </td>
             <td class="storage">{{ item.storage_id || item.box_name || '-' }}</td>
@@ -500,6 +518,25 @@
                 <input v-model="formData.rechargeable" type="checkbox" />
                 Rechargeable
               </label>
+            </div>
+          </div>
+
+          <div v-if="formData.item_type === 'Other Items'" class="other-items-fields">
+            <div class="form-group">
+              <label>Item Type *</label>
+              <input v-model="formData.other_item_type" type="text" placeholder="e.g., Connector, Washer, Switch, Resistor" required />
+            </div>
+            <div class="form-group">
+              <label>Name</label>
+              <input v-model="formData.other_item_name" type="text" placeholder="e.g., XT90 M, 6X2.5x05" />
+            </div>
+            <div class="form-group">
+              <label>Size</label>
+              <input v-model="formData.size" type="text" placeholder="e.g., Small, Medium, Large, 4mm" />
+            </div>
+            <div class="form-group">
+              <label>Company</label>
+              <input v-model="formData.other_item_company" type="text" placeholder="e.g., Noctua, No Name" />
             </div>
           </div>
 
@@ -906,6 +943,9 @@ export default {
       formData.value = {
         name: '',
         item_type: '',
+        other_item_type: '',
+        other_item_name: '',
+        other_item_company: '',
         company: '',
         model: '',
         item_code: '',
@@ -913,8 +953,17 @@ export default {
         length: '',
         head_type: '',
         drive_type: '',
+        thread_type: '',
+        type: '',
         color: '',
         material: '',
+        has_washer: false,
+        id_inner: null,
+        od: null,
+        width: null,
+        flanged: false,
+        seal_type: '',
+        characteristic: '',
         category_id: '',
         box_id: '',
         quantity: 0,
@@ -1020,6 +1069,15 @@ export default {
         } else if (sortBy.value === 'rechargeable') {
           aVal = a.rechargeable ? 1 : 0;
           bVal = b.rechargeable ? 1 : 0;
+        } else if (sortBy.value === 'item_type') {
+          aVal = (a.item_type || '').toLowerCase();
+          bVal = (b.item_type || '').toLowerCase();
+        } else if (sortBy.value === 'name') {
+          aVal = (a.name || a.display_name || '').toLowerCase();
+          bVal = (b.name || b.display_name || '').toLowerCase();
+        } else if (sortBy.value === 'company') {
+          aVal = (a.company || a.display_company || '').toLowerCase();
+          bVal = (b.company || b.display_company || '').toLowerCase();
         }
         
         if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
@@ -1157,6 +1215,21 @@ export default {
       return categoryItems.some(i => i.source_type === 'battery');
     };
 
+    const isCurrentCategoryOtherItems = () => {
+      if (!filterCategory.value) return false;
+      
+      // Check category name first
+      const currentCategory = categories.value.find(c => c.id === filterCategory.value);
+      if (currentCategory && currentCategory.name.toLowerCase().includes('other')) {
+        return true;
+      }
+      
+      // Fallback: check if any items in category are other_items
+      if (items.value.length === 0) return false;
+      const categoryItems = items.value.filter(i => i.category_id === filterCategory.value);
+      return categoryItems.some(i => i.source_type === 'other_item');
+    };
+
     const hasSearchMatch = (item, field) => {
       if (!searchQuery.value) return false;
       const query = searchQuery.value.toLowerCase();
@@ -1220,6 +1293,13 @@ export default {
         await loadEnumOptions(['oil_paste_company', 'oil_paste_type']);
       } else if (formData.value.item_type === 'Batteries') {
         await loadEnumOptions(['battery_size', 'battery_company', 'battery_model', 'battery_type']);
+      } else if (formData.value.item_type === 'Other Items') {
+        // For Other Items, item.item_type contains the specific item type
+        formData.value.other_item_type = item.item_type;
+        formData.value.other_item_name = item.name || '';
+        formData.value.other_item_company = item.company || '';
+        // Set item_type back to 'Other Items' for the category selector
+        formData.value.item_type = 'Other Items';
       }
       showAddModal.value = true;
     };
@@ -1298,6 +1378,19 @@ export default {
           // Auto-assign RC Parts category
           const rcCategory = categories.value.find(c => c.name === 'RC Parts');
           if (rcCategory) payload.category_id = rcCategory.id;
+        } else if (payload.item_type === 'Other Items') {
+          payload.item_type = payload.other_item_type || 'Unknown';
+          payload.name = payload.other_item_name || '';
+          payload.size = payload.size || '';
+          payload.company = payload.other_item_company || '';
+          payload.source_type = 'other_item';
+          // Auto-assign Other Items category
+          const otherItemsCategory = categories.value.find(c => c.name === 'Other Items');
+          if (otherItemsCategory) payload.category_id = otherItemsCategory.id;
+          // Clean up the other_item_* fields
+          delete payload.other_item_type;
+          delete payload.other_item_name;
+          delete payload.other_item_company;
         }
 
         if (editingItem.value) {
@@ -1385,6 +1478,7 @@ export default {
       isCurrentCategoryBearings,
       isCurrentCategoryOilPastes,
       isCurrentCategoryBatteries,
+      isCurrentCategoryOtherItems,
       currentPage,
       totalPages,
       paginatedItems,

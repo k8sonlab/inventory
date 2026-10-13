@@ -1,5 +1,5 @@
 import express from 'express';
-import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery } from '../models/index.js';
+import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem } from '../models/index.js';
 
 const router = express.Router();
 
@@ -44,6 +44,8 @@ router.post('/', async (req, res) => {
       item = await OilPaste.create(req.body);
     } else if (req.body.source_type === 'battery' || req.body.item_type === 'Batteries') {
       item = await Battery.create(req.body);
+    } else if (req.body.source_type === 'other_item' || req.body.item_type === 'Other Items') {
+      item = await OtherItem.create(req.body);
     } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
       item = await RCPart.create(req.body);
     } else {
@@ -69,6 +71,8 @@ router.put('/:id', async (req, res) => {
       item = await OilPaste.update(req.params.id, req.body);
     } else if (req.body.source_type === 'battery' || req.body.item_type === 'Batteries') {
       item = await Battery.update(req.params.id, req.body);
+    } else if (req.body.source_type === 'other_item' || req.body.item_type === 'Other Items') {
+      item = await OtherItem.update(req.params.id, req.body);
     } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
       item = await RCPart.update(req.params.id, req.body);
     } else {
@@ -97,6 +101,8 @@ router.delete('/:id', async (req, res) => {
       item = await OilPaste.delete(req.params.id);
     } else if (req.body.source_type === 'battery' || req.body.item_type === 'Batteries') {
       item = await Battery.delete(req.params.id);
+    } else if (req.body.source_type === 'other_item' || req.body.item_type === 'Other Items') {
+      item = await OtherItem.delete(req.params.id);
     } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
       item = await RCPart.delete(req.params.id);
     } else {

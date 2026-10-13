@@ -1,6 +1,6 @@
 import XLSX from 'xlsx';
 import { initializeDatabase, closeDatabase, isPostgresDB, query, exec } from '../db.js';
-import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum } from '../models/index.js';
+import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum, OtherItem } from '../models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -363,27 +363,42 @@ async function importExcelData() {
     // 9. Import Other Items
     console.log('\n📦 Importing Other Items...');
     const otherSheet = workbook.Sheets['Other Items'];
-    const otherData = XLSX.utils.sheet_to_json(otherSheet);
     
-    for (const row of otherData) {
-      if (!row['Storage ID'] || !row['Name']) continue;
+    if (!otherSheet) {
+      console.log('  ⚠️  "Other Items" sheet not found');
+    } else {
+      const otherData = XLSX.utils.sheet_to_json(otherSheet);
       
-      const boxId = boxMap[row['Storage ID']];
-      if (!boxId) continue;
+      // Clear existing Other Items from legacy items table
+      await exec(`DELETE FROM items WHERE item_type = 'Other Items'`);
+      console.log('  ✓ Cleared legacy Other Items from items table');
       
-      await Item.create({
-        name: row['Name'],
-        item_type: 'Other Items',
-        category_id: categoryMap['Other Items'],
-        box_id: boxId,
-        quantity: row['Amount'] || 0,
-        parameters: {
-          item_type: row['Item Type'],
-          size: row['Size'] || ''
-        }
-      });
+      // Clear existing Other Items from other_items table
+      await exec(`DELETE FROM other_items`);
+      console.log('  ✓ Cleared other_items table');
+      
+      let otherCount = 0;
+      for (const row of otherData) {
+        if (!row['Storage ID'] || !row['Name']) continue;
+        
+        const boxId = boxMap[row['Storage ID']];
+        if (!boxId) continue;
+        
+        // Import into the new other_items table with all fields
+        await OtherItem.create({
+          item_type: row['Item Type'] || 'Other',
+          name: row['Name'] || '',
+          size: row['Size'] || '',
+          company: row['Company'] || '',
+          quantity: row['Amount'] || row['Quantity'] || 0,
+          box_id: boxId,
+          category_id: categoryMap['Other Items'],
+          notes: row['Notes'] || ''
+        });
+        otherCount++;
+      }
+      console.log(`  ✓ Imported ${otherCount} other items into other_items table`);
     }
-    console.log(`  ✓ Imported ${otherData.length} other items`);
 
     // 9. Import RC Parts into the dedicated rc_parts table
     console.log('\n🏎️  Importing RC Parts...');

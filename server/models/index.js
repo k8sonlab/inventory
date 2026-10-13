@@ -11,7 +11,7 @@ export class Item {
       LEFT JOIN categories c ON i.category_id = c.id
       LEFT JOIN boxes b ON i.box_id = b.id
       LEFT JOIN shelves s ON b.shelf_id = s.id
-      WHERE i.item_type NOT IN ('RC Parts', 'Screws', 'Nuts', 'Bearings', 'Oils/Pastes')
+      WHERE i.item_type NOT IN ('RC Parts', 'Screws', 'Nuts', 'Bearings', 'Oils/Pastes') AND i.item_type != 'Other Items'
     `;
     const params = [];
     let paramCount = 1;
@@ -96,7 +96,7 @@ export class Item {
 
 export class Category {
   static async getAll() {
-    return await query('SELECT * FROM categories ORDER BY name');
+    return await query('SELECT * FROM categories ORDER BY sort_order, name');
   }
 
   static async create(name) {
@@ -332,8 +332,9 @@ export class RCPart {
     const bearings = await Bearing.getAll(filters);
     const oilPastes = await OilPaste.getAll(filters);
     const batteries = await Battery.getAll(filters);
+    const otherItems = await OtherItem.getAll(filters);
     
-    console.log(`[getAllCombined] items=${items.length}, rcParts=${rcParts.length}, screws=${screws.length}, nuts=${nuts.length}, bearings=${bearings.length}, oilPastes=${oilPastes.length}, batteries=${batteries.length}`);
+    console.log(`[getAllCombined] items=${items.length}, rcParts=${rcParts.length}, screws=${screws.length}, nuts=${nuts.length}, bearings=${bearings.length}, oilPastes=${oilPastes.length}, batteries=${batteries.length}, otherItems=${otherItems.length}`);
     
     // Combine and format all types
     const combined = [
@@ -404,6 +405,16 @@ export class RCPart {
         display_model: null,
         display_code: null,
         item_type: 'Batteries'
+      })),
+      ...otherItems.map(oi => ({
+        ...oi,
+        id: oi.id,
+        source_type: 'other_item',
+        display_name: oi.name,
+        display_company: oi.company,
+        display_model: oi.size,
+        display_code: null,
+        item_type: oi.item_type
       }))
     ];
     
@@ -882,6 +893,94 @@ export class Battery {
 
   static async delete(id) {
     const sql = `DELETE FROM batteries WHERE id = ${isPostgresDB() ? '$1' : '?'}`;
+    await exec(sql, [id]);
+    return { success: true };
+  }
+}
+
+export class OtherItem {
+  static async getAll(filters = {}) {
+    let sql = `
+      SELECT o.*, bo.box_name, bo.storage_id, sh.location, 'other_item' as source_type
+      FROM other_items o
+      LEFT JOIN boxes bo ON o.box_id = bo.id
+      LEFT JOIN shelves sh ON bo.shelf_id = sh.id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramCount = 1;
+    const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
+    const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
+    
+    if (filters.category_id && filters.category_id !== '') {
+      sql += ` AND o.category_id = ${ph()}`;
+      params.push(filters.category_id);
+    }
+    if (filters.box_id) {
+      sql += ` AND o.box_id = ${ph()}`;
+      params.push(filters.box_id);
+    }
+    if (filters.search) {
+      sql += ` AND (o.name ${likeOp} ${ph()} OR o.item_type ${likeOp} ${ph()} OR o.size ${likeOp} ${ph()} OR o.company ${likeOp} ${ph()} OR bo.storage_id ${likeOp} ${ph()} OR o.notes ${likeOp} ${ph()})`;
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+    }
+    
+    sql += ` ORDER BY o.item_type, o.size`;
+    return await query(sql, params);
+  }
+
+  static async getById(id) {
+    const sql = `
+      SELECT o.*, bo.box_name, bo.storage_id, sh.location, 'other_item' as source_type
+      FROM other_items o
+      LEFT JOIN boxes bo ON o.box_id = bo.id
+      LEFT JOIN shelves sh ON bo.shelf_id = sh.id
+      WHERE o.id = ${isPostgresDB() ? '$1' : '?'}
+    `;
+    return await queryOne(sql, [id]);
+  }
+
+  static async create(data) {
+    const id = uuidv4();
+    const now = NOW();
+    const { item_type, size, name, company, quantity, box_id, category_id, notes } = data;
+    
+    const sql = `
+      INSERT INTO other_items (id, item_type, size, name, company, quantity, box_id, category_id, notes, created_at, updated_at)
+      VALUES (${isPostgresDB() ? '$1, $2, $3, $4, $5, $6, $7, $8, $9' : '?, ?, ?, ?, ?, ?, ?, ?, ?'}, ${now}, ${now})
+    `;
+    const params = [id, item_type || null, size || null, name || null, company || null, quantity || 0, box_id || null, category_id || null, notes || null];
+    await exec(sql, params);
+    return await OtherItem.getById(id);
+  }
+
+  static async update(id, data) {
+    const { item_type, size, name, company, quantity, box_id, category_id, notes } = data;
+    const sql = `
+      UPDATE other_items 
+      SET item_type = ${isPostgresDB() ? '$1' : '?'}, 
+          size = ${isPostgresDB() ? '$2' : '?'}, 
+          name = ${isPostgresDB() ? '$3' : '?'},
+          company = ${isPostgresDB() ? '$4' : '?'},
+          quantity = ${isPostgresDB() ? '$5' : '?'}, 
+          box_id = ${isPostgresDB() ? '$6' : '?'}, 
+          category_id = ${isPostgresDB() ? '$7' : '?'}, 
+          notes = ${isPostgresDB() ? '$8' : '?'}, 
+          updated_at = ${NOW()}
+      WHERE id = ${isPostgresDB() ? '$9' : '?'}
+    `;
+    const params = [item_type || null, size || null, name || null, company || null, quantity || 0, box_id || null, category_id || null, notes || null, id];
+    await exec(sql, params);
+    return await OtherItem.getById(id);
+  }
+
+  static async delete(id) {
+    const sql = `DELETE FROM other_items WHERE id = ${isPostgresDB() ? '$1' : '?'}`;
     await exec(sql, [id]);
     return { success: true };
   }

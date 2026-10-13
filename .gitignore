@@ -1,6 +1,8 @@
 node_modules/
 .env
 *.log
+inventory.db*
+server/inventory.db
 dist/
 .DS_Store
 postgres_data/
