@@ -2,11 +2,6 @@ name: Push Helm Chart to GHCR
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'helm/**'
-      - '.github/workflows/push-helm-chart.yml'
     tags:
       - 'v*.*.*'
 

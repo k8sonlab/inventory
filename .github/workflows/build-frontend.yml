@@ -2,11 +2,6 @@ name: Build and Push Frontend Image
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'client/**'
-      - '.github/workflows/build-frontend.yml'
     tags:
       - 'v*.*.*'
   pull_request:
