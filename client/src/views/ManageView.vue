@@ -113,13 +113,6 @@
         <input v-model="newEnumValue" placeholder="New option value" />
         <button @click="addEnumValue" class="btn-primary" :disabled="!selectedEnumType || !newEnumValue">Add Option</button>
       </div>
-      <div v-if="selectedEnumType" class="manage-list">
-        <div v-if="enumValuesList.length === 0" class="empty-state">No options for this type</div>
-        <div v-for="value in enumValuesList" :key="value" class="manage-item">
-          <span>{{ value }}</span>
-          <button @click="deleteEnumValue(value)" class="btn-icon" title="Delete">🗑️</button>
-        </div>
-      </div>
     </div>
 
     <div class="manage-section">
@@ -147,6 +140,7 @@ export default {
   setup() {
     const categories = ref([]);
     const newCategory = ref('');
+    // Parameter Options - kept as unused refs to avoid Vue errors in template
     const selectedEnumType = ref('');
     const newEnumValue = ref('');
     const enumValuesList = ref([]);
@@ -202,6 +196,18 @@ export default {
       }
     };
 
+    const loadRCFieldValues = async () => {
+      if (selectedRCFieldType.value) {
+        try {
+          const response = await enumsService.getValues(selectedRCFieldType.value);
+          rcFieldValuesList.value = response.data || [];
+        } catch (error) {
+          console.error('Error loading RC field values:', error);
+        }
+      }
+    };
+
+    // Parameter Options management functions (kept for template compatibility)
     const loadEnumValues = async () => {
       if (selectedEnumType.value) {
         try {
@@ -233,17 +239,6 @@ export default {
         } catch (error) {
           console.error('Error deleting enum value:', error);
           alert('Error deleting option: ' + error.message);
-        }
-      }
-    };
-
-    const loadRCFieldValues = async () => {
-      if (selectedRCFieldType.value) {
-        try {
-          const response = await enumsService.getValues(selectedRCFieldType.value);
-          rcFieldValuesList.value = response.data || [];
-        } catch (error) {
-          console.error('Error loading RC field values:', error);
         }
       }
     };
