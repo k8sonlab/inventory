@@ -7,11 +7,13 @@ on:
     paths:
       - 'helm/**'
       - '.github/workflows/push-helm-chart.yml'
+    tags:
+      - 'v*.*.*'
 
 env:
   REGISTRY: ghcr.io
   CHART_NAME: inventory
-  CHART_REPO: ${{ github.repository }}
+  CHART_REPO: k8sonlab
 
 jobs:
   push-chart:
