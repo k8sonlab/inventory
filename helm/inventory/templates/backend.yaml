@@ -29,9 +29,8 @@ spec:
           containerPort: {{ .Values.backend.service.targetPort }}
           protocol: TCP
         env:
-        {{- range $key, $value := .Values.backend.env }}
-        - name: {{ $key }}
-          value: {{ $value | quote }}
+        {{- with .Values.backend.env }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
         - name: DATABASE_PATH
           value: {{ .Values.backend.database.path }}

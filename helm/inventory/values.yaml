@@ -55,8 +55,24 @@ backend:
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
   env:
-    NODE_ENV: production
-    PORT: "3000"
+    - name: NODE_ENV
+      value: production
+    - name: PORT
+      value: "3000"
+    - name: LOG_LEVEL
+      value: "info"
+    # Example with ConfigMapRef:
+    # - name: DATABASE_CONFIG
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       name: db-config
+    #       key: connection-string
+    # Example with SecretRef:
+    # - name: DB_PASSWORD
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: db-credentials
+    #       key: password
   database:
     path: /data/inventory.db
 
