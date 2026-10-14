@@ -31,8 +31,8 @@ export async function initializeDatabase() {
     };
     
     // SSL config: enabled by default with self-signed cert support
-    // Disable with DB_SSL=disable
-    if (process.env.DB_SSL === 'disable') {
+    // Disable with DB_SSL=disable or DB_SSL=disabled
+    if (process.env.DB_SSL === 'disable' || process.env.DB_SSL === 'disabled') {
       poolConfig.ssl = false;
     } else {
       poolConfig.ssl = { rejectUnauthorized: false };
