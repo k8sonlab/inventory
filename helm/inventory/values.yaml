@@ -1,0 +1,91 @@
+## Global settings
+global:
+  environment: production
+
+## Frontend (Vue.js + Vite)
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/varet80/inventory/inventory-client
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 5174
+  ingress:
+    enabled: false
+    className: istio
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+## Backend (Node.js + Express)
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/varet80/inventory/inventory-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  env:
+    NODE_ENV: production
+    PORT: "3000"
+  database:
+    path: /data/inventory.db
+
+## Gateway API - HTTPRoute configuration
+httpRoute:
+  enabled: true
+  gatewayName: inventory-gateway
+  hostname: inventory.example.com
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: inventory-gateway
+      namespace: default
+
+## Persistent storage
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: standard
+  path: /data
+
+## Health checks
+healthCheck:
+  backend:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  frontend:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10

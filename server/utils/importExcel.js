@@ -4,22 +4,29 @@ import { runMigrations } from '../migrations/run.js';
 import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum, OtherItem, WasherBearing } from '../models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function importExcelData() {
+async function importExcelData(filePath) {
   try {
-    const filePath = path.join(__dirname, '..', '..', 'Generic Items Storage.xlsx');
+    // Use provided path or default
+    const excelFilePath = filePath || path.join(__dirname, '..', '..', 'Generic Items Storage.xlsx');
     
-    console.log(`\n📂 Reading Excel file: ${filePath}\n`);
+    console.log(`\n📂 Reading Excel file: ${excelFilePath}\n`);
+    
+    // Verify file exists
+    if (!fs.existsSync(excelFilePath)) {
+      throw new Error(`File not found: ${excelFilePath}`);
+    }
     
     await initializeDatabase();
     await runMigrations();
     const db = isPostgresDB() ? 'PostgreSQL' : 'SQLite';
     console.log(`🗄️  Using ${db} database\n`);
     
-    const workbook = XLSX.readFile(filePath);
+    const workbook = XLSX.readFile(excelFilePath);
     
     // Debug: Print all sheet names
     console.log('📋 Available sheets:', Object.keys(workbook.Sheets));
@@ -620,4 +627,20 @@ async function importExcelData() {
   }
 }
 
-importExcelData();
+// Get Excel file path from command line argument
+const excelFilePath = process.argv[2];
+
+if (!excelFilePath) {
+  console.log('📖 Usage: node importExcel.js <path-to-excel-file>');
+  console.log('\nExamples:');
+  console.log('  node importExcel.js ./Generic Items Storage.xlsx');
+  console.log('  node importExcel.js /path/to/inventory-data.xlsx');
+  console.log('  node importExcel.js C:\\Users\\Data\\inventory.xlsx');
+  console.log('\nIf no path is provided, will look for: Generic Items Storage.xlsx in project root\n');
+  
+  // Call with undefined to use default file
+  importExcelData();
+} else {
+  // Call with provided file path
+  importExcelData(excelFilePath);
+}

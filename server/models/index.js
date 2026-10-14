@@ -1098,7 +1098,7 @@ export class WasherBearing {
       updates.push(`category = ${ph()}`);
       params.push(data.category);
     }
-    if (data.name) {
+    if (data.name !== undefined) {
       updates.push(`name = ${ph()}`);
       params.push(data.name);
     }
