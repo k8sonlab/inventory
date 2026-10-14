@@ -22,13 +22,24 @@ let SQL = null;
 export async function initializeDatabase() {
   if (DB_TYPE === 'postgres') {
     isPostgres = true;
-    db = new Pool({
+    const poolConfig = {
       user: process.env.DB_USER || 'inventory_user',
       host: process.env.DB_HOST || 'localhost',
       database: process.env.DB_NAME || 'inventory_db',
       password: process.env.DB_PASSWORD || 'password',
       port: process.env.DB_PORT || 5432,
-    });
+    };
+    
+    // Add SSL config if DB_SSL is set
+    if (process.env.DB_SSL && process.env.DB_SSL !== 'false') {
+      if (process.env.DB_SSL === 'require') {
+        poolConfig.ssl = { rejectUnauthorized: false };
+      } else if (process.env.DB_SSL === 'prefer') {
+        poolConfig.ssl = true;
+      }
+    }
+    
+    db = new Pool(poolConfig);
     console.log('📊 Connected to PostgreSQL');
   } else {
     isPostgres = false;
