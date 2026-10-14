@@ -1,9 +1,10 @@
 name: Push Helm Chart to GHCR
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_run:
+    workflows: ["Build and Push Backend Image", "Build and Push Frontend Image"]
+    types: [completed]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -13,6 +14,7 @@ env:
 jobs:
   push-chart:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     permissions:
       contents: read
       packages: write
@@ -32,11 +34,19 @@ jobs:
             --username ${{ github.actor }} \
             --password-stdin
 
-      - name: Update Chart version from Git SHA
+      - name: Extract version from git tag
+        id: version
         run: |
-          CHART_VERSION=$(git rev-parse --short HEAD)
-          sed -i "s/version: .*/version: ${CHART_VERSION}/" helm/inventory/Chart.yaml
-          sed -i "s/appVersion: .*/appVersion: ${CHART_VERSION}/" helm/inventory/Chart.yaml
+          TAG=$(git describe --tags --exact-match 2>/dev/null || echo "dev")
+          VERSION=${TAG#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Chart version: ${VERSION}"
+
+      - name: Update Chart version from Git Tag
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          sed -i "s/version: .*/version: ${VERSION}/" helm/inventory/Chart.yaml
+          sed -i "s/appVersion: .*/appVersion: ${VERSION}/" helm/inventory/Chart.yaml
 
       - name: Package Helm chart
         run: |
