@@ -30,13 +30,13 @@ export async function initializeDatabase() {
       port: process.env.DB_PORT || 5432,
     };
     
-    // Add SSL config if DB_SSL is set
-    if (process.env.DB_SSL && process.env.DB_SSL !== 'false') {
-      if (process.env.DB_SSL === 'require') {
-        poolConfig.ssl = { rejectUnauthorized: false };
-      } else if (process.env.DB_SSL === 'prefer') {
-        poolConfig.ssl = true;
-      }
+    // SSL config: disabled by default, enable with DB_SSL=require or DB_SSL=prefer
+    poolConfig.ssl = false;
+    
+    if (process.env.DB_SSL === 'require') {
+      poolConfig.ssl = { rejectUnauthorized: false };
+    } else if (process.env.DB_SSL === 'prefer') {
+      poolConfig.ssl = true;
     }
     
     db = new Pool(poolConfig);
