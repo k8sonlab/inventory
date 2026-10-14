@@ -32,7 +32,14 @@ export class WasherBearing {
       params.push(filters.subtype);
     }
     if (filters.search) {
-      sql += ` AND (wb.name ${likeOp} ${ph()} OR b.storage_id ${likeOp} ${ph()} OR wb.notes ${likeOp} ${ph()} OR wb.subtype ${likeOp} ${ph()} OR wb.category ${likeOp} ${ph()})`;
+      // Use COLLATE NOCASE for case-insensitive search in SQLite, or ILIKE for PostgreSQL
+      const searchClause = isPostgresDB() 
+        ? `(wb.name ${likeOp} ${ph()} OR b.storage_id ${likeOp} ${ph()} OR wb.notes ${likeOp} ${ph()} OR wb.subtype ${likeOp} ${ph()} OR wb.category ${likeOp} ${ph()} OR CAST(wb.inner_diameter AS TEXT) ${likeOp} ${ph()} OR CAST(wb.outer_diameter AS TEXT) ${likeOp} ${ph()} OR CAST(wb.thickness AS TEXT) ${likeOp} ${ph()})`
+        : `(wb.name COLLATE NOCASE ${likeOp} ${ph()} OR b.storage_id COLLATE NOCASE ${likeOp} ${ph()} OR wb.notes COLLATE NOCASE ${likeOp} ${ph()} OR wb.subtype COLLATE NOCASE ${likeOp} ${ph()} OR wb.category COLLATE NOCASE ${likeOp} ${ph()} OR CAST(wb.inner_diameter AS TEXT) ${likeOp} ${ph()} OR CAST(wb.outer_diameter AS TEXT) ${likeOp} ${ph()} OR CAST(wb.thickness AS TEXT) ${likeOp} ${ph()})`;
+      sql += ` AND ${searchClause}`;
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
+      params.push(`%${filters.search}%`);
       params.push(`%${filters.search}%`);
       params.push(`%${filters.search}%`);
       params.push(`%${filters.search}%`);

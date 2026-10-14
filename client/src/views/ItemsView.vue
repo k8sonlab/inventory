@@ -1529,6 +1529,7 @@ export default {
 
     watch(() => searchQuery.value, () => {
       currentPage.value = 1;
+      loadItems();
     });
 
     watch(() => filterCategory.value, () => {

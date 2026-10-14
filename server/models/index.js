@@ -1029,11 +1029,17 @@ export class WasherBearing {
       params.push(filters.subtype);
     }
     if (filters.search) {
-      sql += ` AND (wb.name ${likeOp} ${ph()} OR b.storage_id ${likeOp} ${ph()} OR wb.notes ${likeOp} ${ph()} OR wb.subtype ${likeOp} ${ph()})`;
-      params.push(`%${filters.search}%`);
-      params.push(`%${filters.search}%`);
-      params.push(`%${filters.search}%`);
-      params.push(`%${filters.search}%`);
+      // Case-insensitive search: include category (Type), inner_diameter (ID), outer_diameter (OD), thickness
+      const searchTerm = `%${filters.search}%`;
+      const searchClausePostgres = `(wb.name ILIKE ${ph()} OR b.storage_id ILIKE ${ph()} OR wb.notes ILIKE ${ph()} OR wb.subtype ILIKE ${ph()} OR wb.category ILIKE ${ph()} OR CAST(wb.inner_diameter AS TEXT) ILIKE ${ph()} OR CAST(wb.outer_diameter AS TEXT) ILIKE ${ph()} OR CAST(wb.thickness AS TEXT) ILIKE ${ph()})`;
+      const searchClauseSqlite = `(wb.name LIKE ${ph()} OR b.storage_id LIKE ${ph()} OR wb.notes LIKE ${ph()} OR wb.subtype LIKE ${ph()} OR wb.category LIKE ${ph()} OR CAST(wb.inner_diameter AS TEXT) LIKE ${ph()} OR CAST(wb.outer_diameter AS TEXT) LIKE ${ph()} OR CAST(wb.thickness AS TEXT) LIKE ${ph()})`;
+      const searchClause = isPostgresDB() ? searchClausePostgres : searchClauseSqlite;
+      sql += ` AND ${searchClause}`;
+      // Push search terms - convert to UPPER case for case-insensitive matching in SQLite LIKE
+      const upperSearchTerm = `%${filters.search.toUpperCase()}%`;
+      for (let i = 0; i < 8; i++) {
+        params.push(isPostgresDB() ? searchTerm : upperSearchTerm);
+      }
     }
 
     sql += ` ORDER BY wb.name`;
