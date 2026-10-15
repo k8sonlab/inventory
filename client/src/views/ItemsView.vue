@@ -5,7 +5,7 @@
         v-model="searchQuery" 
         type="text" 
         placeholder="Search items..."
-        @input="handleSearch"
+        @keydown.enter.prevent="handleSearch"
       />
       <select v-model="filterCategory" @change="handleFilter">
         <option value="">All Categories</option>
@@ -671,7 +671,7 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 import { itemsService, categoriesService, enumsService, locationsService } from '../services/api.js';
 import QuantityEditor from '../components/QuantityEditor.vue';
 
@@ -829,11 +829,18 @@ export default {
     const sortBy = ref('company');
     const sortOrder = ref('asc'); // 'asc' or 'desc'
 
-    const loadItems = async () => {
+    let searchTimer;
+    const cancelPendingSearch = () => {
+      clearTimeout(searchTimer);
+      searchTimer = undefined;
+    };
+
+    const loadItems = async ({ preserveItems = false } = {}) => {
+      cancelPendingSearch();
       const request = ++itemsRequest;
       itemsError.value = '';
       itemsLoading.value = true;
-      items.value = [];
+      if (!preserveItems) items.value = [];
       try {
         const response = await itemsService.getAll({
           search: searchQuery.value,
@@ -844,6 +851,7 @@ export default {
       } catch (error) {
         if (request !== itemsRequest) return;
         console.error('Error loading items:', error);
+        items.value = [];
         itemsError.value = error.response?.data?.error || 'Could not load items. Try changing the search or selecting the category again.';
       } finally {
         if (request === itemsRequest) itemsLoading.value = false;
@@ -964,7 +972,8 @@ export default {
     };
 
     const handleSearch = () => {
-      loadItems();
+      currentPage.value = 1;
+      loadItems({ preserveItems: true });
     };
 
     const handleFilter = () => {
@@ -1548,7 +1557,15 @@ export default {
 
     watch(() => searchQuery.value, () => {
       currentPage.value = 1;
-      loadItems();
+      cancelPendingSearch();
+      ++itemsRequest;
+      itemsLoading.value = false;
+      searchTimer = setTimeout(() => loadItems({ preserveItems: true }), 350);
+    }, { flush: 'sync' });
+
+    onBeforeUnmount(() => {
+      cancelPendingSearch();
+      ++itemsRequest;
     });
 
     watch(() => filterCategory.value, () => {

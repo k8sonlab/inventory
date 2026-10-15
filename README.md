@@ -189,6 +189,8 @@ Click a quantity in any category tab to edit it inline, then **Save** (or press 
 
 Search works across categories, including JSON item parameters and washer/bearing dimensions, with case-insensitive matching. PostgreSQL dimensions are returned as JSON numbers like SQLite dimensions, without fixed-scale trailing zeros. The item list shows loading and error states and ignores outdated responses when switching tabs or changing search quickly.
 
+Search runs 350 ms after typing stops, rather than on every keystroke. Press Enter to search immediately. Existing results stay visible while a search loads; selecting another category cancels pending search timers and loads that category immediately.
+
 #### Try quantity editing locally with SQLite
 
 Use a separate database to avoid changing your usual inventory. From `server/`:
