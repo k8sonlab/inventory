@@ -179,7 +179,8 @@ gh workflow run deploy.yml
 
 - **Base**: `node:20-alpine`
 - **Port**: 3000
-- **Healthcheck**: `/health` endpoint
+- **Liveness / container healthcheck**: `/healthz` (HTTP 200, independent of database connectivity)
+- **Readiness**: `/healthz/ready` (HTTP 200 for SQLite or reachable PostgreSQL; HTTP 503 if configured PostgreSQL is unavailable). PostgreSQL connections and readiness queries each time out after 2 seconds; the readiness probe timeout is 5 seconds.
 - **Database**: SQLite at `/data/inventory.db`
 - **Environment**: NODE_ENV=production
 

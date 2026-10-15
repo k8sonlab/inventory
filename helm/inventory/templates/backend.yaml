@@ -45,8 +45,9 @@ spec:
           periodSeconds: {{ .Values.healthCheck.backend.periodSeconds }}
         readinessProbe:
           httpGet:
-            path: {{ .Values.healthCheck.backend.path }}
+            path: {{ .Values.healthCheck.backend.readinessPath }}
             port: http
+          timeoutSeconds: {{ .Values.healthCheck.backend.readinessTimeoutSeconds }}
           initialDelaySeconds: {{ .Values.healthCheck.backend.initialDelaySeconds }}
           periodSeconds: {{ .Values.healthCheck.backend.periodSeconds }}
         {{- end }}

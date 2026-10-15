@@ -120,6 +120,8 @@ spec:
         env:
         - name: DB_HOST
           value: postgres
+        - name: DB_TYPE
+          value: postgres
         - name: DB_USER
           valueFrom:
             secretKeyRef:
@@ -141,8 +143,15 @@ spec:
           value: production
         livenessProbe:
           httpGet:
-            path: /api/health
+            path: /healthz
             port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz/ready
+            port: 3000
+          timeoutSeconds: 5
           initialDelaySeconds: 30
           periodSeconds: 10
 

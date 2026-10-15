@@ -96,7 +96,9 @@ persistence:
 healthCheck:
   backend:
     enabled: true
-    path: /health
+    path: /healthz
+    readinessPath: /healthz/ready
+    readinessTimeoutSeconds: 5
     initialDelaySeconds: 10
     periodSeconds: 10
   frontend:

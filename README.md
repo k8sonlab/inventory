@@ -148,6 +148,15 @@ All inventory items are linked to boxes via the **Storage ID** field, which is t
 
 ## API Endpoints
 
+### Health checks
+- `GET /healthz` - Always returns HTTP 200 while the server is running (Kubernetes liveness).
+- `GET /healthz/ready` - Returns HTTP 200 if PostgreSQL responds to `SELECT 1`, or if SQLite is configured. Returns HTTP 503 if PostgreSQL is unavailable.
+- `GET /api/health` - Existing API health endpoint, unchanged.
+
+PostgreSQL pool connections time out after 2 seconds, and readiness queries time out after 2 seconds. Kubernetes readiness probes allow 5 seconds for the check. The server still initializes the database and runs migrations before accepting HTTP requests.
+
+Run backend health endpoint tests with `cd server && npm test`.
+
 ### Items
 - `GET /api/items` - List all items (supports filters: search, category_id, box_id, item_type)
 - `GET /api/items/:id` - Get single item

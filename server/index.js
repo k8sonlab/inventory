@@ -10,6 +10,7 @@ import itemRoutes from './routes/items.js';
 import categoryRoutes from './routes/categories.js';
 import storageRoutes from './routes/locations.js';
 import enumRoutes from './routes/enums.js';
+import healthRoutes from './routes/health.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Health check
+app.use('/healthz', healthRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Inventory API is running' });
 });
