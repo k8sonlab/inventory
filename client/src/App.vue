@@ -3,7 +3,7 @@
     <header>
       <div class="header-row">
         <h1>📦 Inventory Manager</h1>
-        <span class="app-version">v{{ appVersion }}</span>
+        <span class="app-version">{{ appVersion }}</span>
       </div>
       <nav>
         <button @click="navigateTo('items')" :class="{ active: currentView === 'items' && selectedCategory === null }">Items</button>
@@ -37,7 +37,8 @@ export default {
     ManageView
   },
   setup() {
-    const appVersion = '1.0.0';
+    const buildVersion = import.meta.env.VITE_APP_VERSION || 'dev';
+    const appVersion = /^\d+\.\d+\.\d+/.test(buildVersion) ? `v${buildVersion}` : buildVersion;
     const currentView = ref('items');
     const categories = ref([]);
     const selectedCategory = ref(null);

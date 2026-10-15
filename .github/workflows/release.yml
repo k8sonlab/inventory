@@ -90,6 +90,8 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ./client
+          build-args: |
+            VITE_APP_VERSION=${{ steps.meta.outputs.version }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

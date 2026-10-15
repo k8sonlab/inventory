@@ -76,6 +76,8 @@ cd client && npm run dev    # Terminal 2
 
 Access the app at **http://localhost:5173** ✨
 
+The header version is embedded at frontend build time using `VITE_APP_VERSION`. Release CI passes the image metadata version, so a release tagged `v0.1.4` displays `v0.1.4`. Unversioned local builds show `dev`. For a manual build, use `VITE_APP_VERSION=0.1.4 npm run build` in `client/`, or pass `--build-arg VITE_APP_VERSION=0.1.4` when building a frontend Docker image. Changing this value requires rebuilding the frontend; runtime environment variables do not change an already compiled badge.
+
 ### 🐘 Using PostgreSQL (K8s)
 
 1. Update `.env` in `server/`:
