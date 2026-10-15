@@ -143,6 +143,15 @@ export async function exec(sql, params = []) {
 }
 
 /**
+ * Execute a write with RETURNING and persist SQLite changes.
+ */
+export async function execReturning(sql, params = []) {
+  const rows = await query(sql, params);
+  saveSQLiteDatabase();
+  return rows;
+}
+
+/**
  * Execute multiple statements (for migrations)
  */
 export async function execMultiple(statements) {

@@ -246,7 +246,9 @@
               {{ item.source_type === 'rc_part' || item.source_type === 'screw' || item.source_type === 'nut' ? '-' : (parseParameters(item.parameters)[col] || '-') }}
             </td>
             <td class="storage">{{ item.storage_id || item.box_name || '-' }}</td>
-            <td class="quantity">{{ item.quantity }}</td>
+            <td class="quantity">
+              <QuantityEditor :key="`${item.source_type}:${item.id}`" :item="item" @updated="item.quantity = $event" />
+            </td>
             <td class="details">
               <div class="details-cell">
                 <button v-if="item.notes" @click="viewNotes(item)" class="notes-btn" title="Click to view notes">📝</button>
@@ -668,6 +670,7 @@
 <script>
 import { ref, onMounted, watch, computed } from 'vue';
 import { itemsService, categoriesService, enumsService, locationsService } from '../services/api.js';
+import QuantityEditor from '../components/QuantityEditor.vue';
 
 // Parameter definitions for each item type
 // Types: 'text', 'number', 'date', 'checkbox', 'select' (dropdown)
@@ -704,6 +707,7 @@ const PARAMETER_DEFINITIONS = {
 };
 
 export default {
+  components: { QuantityEditor },
   props: {
     selectedCategory: {
       type: [Number, String, null],

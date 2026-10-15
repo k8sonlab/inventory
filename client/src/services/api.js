@@ -23,6 +23,9 @@ export const itemsService = {
   update(id, item) {
     return api.put(`/items/${id}`, item);
   },
+  updateQuantity(id, source_type, quantity, expected_quantity) {
+    return api.patch(`/items/${id}/quantity`, { source_type, quantity, expected_quantity });
+  },
   delete(id) {
     return api.delete(`/items/${id}`);
   }

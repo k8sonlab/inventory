@@ -1,5 +1,5 @@
 import express from 'express';
-import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem, WasherBearing } from '../models/index.js';
+import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem, WasherBearing, isQuantitySourceType, updateItemQuantity } from '../models/index.js';
 
 const router = express.Router();
 
@@ -56,6 +56,28 @@ router.post('/', async (req, res) => {
     res.status(201).json(item);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// Update quantity only
+router.patch('/:id/quantity', async (req, res) => {
+  const { source_type, quantity, expected_quantity } = req.body || {};
+  if (!isQuantitySourceType(source_type) ||
+      typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0 ||
+      typeof expected_quantity !== 'number' || !Number.isFinite(expected_quantity) ||
+      Object.keys(req.body || {}).some(key => !['source_type', 'quantity', 'expected_quantity'].includes(key))) {
+    return res.status(400).json({ error: 'Provide a valid source_type, a non-negative numeric quantity, and numeric expected_quantity only.' });
+  }
+  try {
+    const result = await updateItemQuantity(req.params.id, source_type, quantity, expected_quantity);
+    if (result.notFound) return res.status(404).json({ error: 'Item not found' });
+    if (result.conflict) {
+      return res.status(409).json({ error: 'Quantity changed since you started editing. Review the current quantity and try again.', quantity: result.quantity });
+    }
+    res.json(result.item);
+  } catch (error) {
+    console.error('Failed to update item quantity:', error);
+    res.status(500).json({ error: 'Failed to update item quantity' });
   }
 });
 

@@ -1,7 +1,38 @@
-import { query, queryOne, exec, isPostgresDB } from '../db.js';
+import { query, queryOne, exec, execReturning, isPostgresDB } from '../db.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const NOW = () => isPostgresDB() ? 'NOW()' : "datetime('now')";
+
+const quantityTables = {
+  item: 'items',
+  rc_part: 'rc_parts',
+  screw: 'screws',
+  nut: 'nuts',
+  bearing: 'bearings',
+  washer_bearing: 'washers_bearings',
+  oil_paste: 'oil_pastes',
+  battery: 'batteries',
+  other_item: 'other_items'
+};
+
+export function isQuantitySourceType(sourceType) {
+  return typeof sourceType === 'string' && Object.hasOwn(quantityTables, sourceType);
+}
+
+export async function updateItemQuantity(id, sourceType, quantity, expectedQuantity) {
+  if (!isQuantitySourceType(sourceType)) throw new Error('Invalid item source type');
+  const table = quantityTables[sourceType];
+  const placeholders = isPostgresDB() ? ['$1', '$2', '$3'] : ['?', '?', '?'];
+  const rows = await execReturning(`
+    UPDATE ${table}
+    SET quantity = ${placeholders[0]}, updated_at = ${NOW()}
+    WHERE id = ${placeholders[1]} AND quantity = ${placeholders[2]}
+    RETURNING id, quantity
+  `, [quantity, id, expectedQuantity]);
+  if (rows.length > 0) return { item: { ...rows[0], source_type: sourceType } };
+  const existing = await queryOne(`SELECT id, quantity FROM ${table} WHERE id = ${isPostgresDB() ? '$1' : '?'}`, [id]);
+  return existing ? { conflict: true, quantity: existing.quantity } : { notFound: true };
+}
 
 export class Item {
   static async getAll(filters = {}) {

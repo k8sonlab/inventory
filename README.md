@@ -175,7 +175,7 @@ PostgreSQL pool connections time out after 2 seconds, and readiness queries time
 
 Run backend health endpoint tests with `cd server && npm test`.
 
-To also run the PostgreSQL Excel-import integration test, set `TEST_POSTGRES_URL` to a PostgreSQL connection URL when running `npm test`. The test creates and removes its own isolated database; the test user needs `CREATE DATABASE` permission. It covers existing integer-column migration, fractional quantities, bearings, and washers. Without this variable, the integration test is skipped.
+To also run the PostgreSQL Excel-import integration test and run the quantity API tests against PostgreSQL, set `TEST_POSTGRES_URL` to a PostgreSQL connection URL when running `npm test`. Tests create and remove their own isolated databases; the test user needs `CREATE DATABASE` permission. They cover existing integer-column migration, fractional quantities, bearings, washers, and quantity-only updates for every item source. Without this variable, the import integration test is skipped and quantity API tests use SQLite.
 
 ### Items
 - `GET /api/items` - List all items (supports filters: search, category_id, box_id, item_type)
@@ -183,6 +183,20 @@ To also run the PostgreSQL Excel-import integration test, set `TEST_POSTGRES_URL
 - `POST /api/items` - Create item
 - `PUT /api/items/:id` - Update item
 - `DELETE /api/items/:id` - Delete item
+- `PATCH /api/items/:id/quantity` - Update only quantity and its modification timestamp. Send `{ "source_type": "screw", "quantity": 1.5, "expected_quantity": 3 }`. Supports all item sources. Non-negative numeric quantities are required; unrelated fields are rejected. Stale edits return HTTP 409 with the current quantity.
+
+Click a quantity in any category tab to edit it inline, then **Save** (or press Enter). **Cancel** or Escape discards the edit. Zero and fractional quantities are supported. Errors leave the editor open without reporting success; conflicting edits show the current quantity for review before retrying. No other item fields are updated.
+
+#### Try quantity editing locally with SQLite
+
+Use a separate database to avoid changing your usual inventory. From `server/`:
+
+```bash
+DB_TYPE=sqlite DB_FILE=/tmp/inventory-demo.db npm run import-excel -- ../g.xlsx --clean
+DB_TYPE=sqlite DB_FILE=/tmp/inventory-demo.db npm start
+```
+
+In another terminal, run `cd client && npm run dev` from the project root and open `http://localhost:5173`. Select a category tab, click a quantity, save it, then reload to verify persistence. The Vite development proxy connects to the backend on port 3000. `/tmp/inventory-demo.db` is sample data only; choose a persistent path if you want to keep it beyond temporary-file cleanup.
 
 ### Categories
 - `GET /api/categories` - List all categories
