@@ -164,6 +164,34 @@ export async function execMultiple(statements) {
 }
 
 /**
+ * Clear application data without dropping the schema.
+ */
+export async function clearApplicationData({ preserveLocations = false } = {}) {
+  const tables = [
+    'items', 'rc_parts', 'screws', 'nuts', 'bearings', 'washers_bearings',
+    'oil_pastes', 'batteries', 'other_items', 'boxes', 'shelves',
+    'categories', 'catalog_enums'
+  ].filter(table => !preserveLocations || (table !== 'boxes' && table !== 'shelves'));
+  const database = getDatabase();
+  if (isPostgres) {
+    await database.query(`TRUNCATE TABLE ${tables.join(', ')}`);
+  } else {
+    database.exec('BEGIN');
+    try {
+      for (const table of tables) {
+        database.exec(`DELETE FROM ${table}`);
+      }
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      console.error('Failed to clear application data:', error);
+      throw error;
+    }
+    saveSQLiteDatabase();
+  }
+}
+
+/**
  * Close database connection
  */
 export async function closeDatabase() {

@@ -1,5 +1,5 @@
 import XLSX from 'xlsx';
-import { initializeDatabase, closeDatabase, isPostgresDB, query, queryOne, exec } from '../db.js';
+import { initializeDatabase, closeDatabase, clearApplicationData, isPostgresDB, query, queryOne, exec } from '../db.js';
 import { runMigrations } from '../migrations/run.js';
 import { Shelf, Box, Category, Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, CatalogEnum, OtherItem, WasherBearing } from '../models/index.js';
 import path from 'path';
@@ -9,7 +9,8 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function importExcelData(filePath) {
+async function importExcelData(filePath, { clean = false, empty = false } = {}) {
+  let databaseInitialized = false;
   try {
     // Use provided path or default
     const excelFilePath = filePath || path.join(__dirname, '..', '..', 'Generic Items Storage.xlsx');
@@ -21,12 +22,28 @@ async function importExcelData(filePath) {
       throw new Error(`File not found: ${excelFilePath}`);
     }
     
+    const workbook = XLSX.readFile(excelFilePath);
+    if (clean || empty) {
+      const requiredSheets = ['Shelves', 'Boxes', 'RC Parts', 'OilsPAstes', 'Batteries'];
+      const missingSheets = requiredSheets.filter(name => !workbook.Sheets[name]);
+      if (missingSheets.length > 0) {
+        throw new Error(`Cannot reset import: missing required sheets: ${missingSheets.join(', ')}`);
+      }
+    }
+
     await initializeDatabase();
+    databaseInitialized = true;
     await runMigrations();
     const db = isPostgresDB() ? 'PostgreSQL' : 'SQLite';
     console.log(`🗄️  Using ${db} database\n`);
     
-    const workbook = XLSX.readFile(excelFilePath);
+    if (clean || empty) {
+      console.warn(empty
+        ? 'WARNING: --empty deletes all application data EXCEPT shelves and boxes before importing.'
+        : 'WARNING: --clean deletes ALL application data before importing; tables are preserved.');
+      await clearApplicationData({ preserveLocations: empty });
+      console.log(empty ? 'Cleared application data; shelves and boxes preserved.' : 'Cleared all application data.');
+    }
     
     // Debug: Print all sheet names
     console.log('📋 Available sheets:', Object.keys(workbook.Sheets));
@@ -622,25 +639,24 @@ async function importExcelData(filePath) {
   } catch (error) {
     console.error('\n❌ Error importing Excel:', error.message);
     console.error(error);
-    await closeDatabase();
+    if (databaseInitialized) await closeDatabase();
     process.exit(1);
   }
 }
 
-// Get Excel file path from command line argument
-const excelFilePath = process.argv[2];
+const args = process.argv.slice(2);
+const paths = args.filter(arg => !arg.startsWith('--'));
+const unknownOptions = args.filter(arg => arg.startsWith('--') && !['--clean', '--empty', '--help'].includes(arg));
 
-if (!excelFilePath) {
-  console.log('📖 Usage: node importExcel.js <path-to-excel-file>');
-  console.log('\nExamples:');
-  console.log('  node importExcel.js ./Generic Items Storage.xlsx');
-  console.log('  node importExcel.js /path/to/inventory-data.xlsx');
-  console.log('  node importExcel.js C:\\Users\\Data\\inventory.xlsx');
-  console.log('\nIf no path is provided, will look for: Generic Items Storage.xlsx in project root\n');
-  
-  // Call with undefined to use default file
-  importExcelData();
+if (unknownOptions.length > 0 || paths.length > 1 || (args.includes('--clean') && args.includes('--empty'))) {
+  console.error(`Invalid arguments: ${args.join(' ')}`);
+  console.error('Usage: node utils/importExcel.js [path-to-excel-file] [--clean | --empty]');
+  process.exitCode = 1;
+} else if (args.includes('--help')) {
+  console.log('Usage: node utils/importExcel.js [path-to-excel-file] [--clean | --empty]');
+  console.log('--clean deletes ALL application data before importing; tables are preserved.');
+  console.log('--empty deletes all application data EXCEPT shelves and boxes before importing.');
+  console.log('Without a path, uses Generic Items Storage.xlsx in the project root.');
 } else {
-  // Call with provided file path
-  importExcelData(excelFilePath);
+  importExcelData(paths[0], { clean: args.includes('--clean'), empty: args.includes('--empty') });
 }

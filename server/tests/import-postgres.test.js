@@ -65,6 +65,7 @@ test('Excel imports fractional quantities, bearings and washers into PostgreSQL'
   const sheets = {
     Shelves: [{ 'Shelf ID': 'S1', Location: 'Test shelf' }],
     Boxes: [{ 'Shelf ID': 'S1', 'Storage ID': 'S1-B01', 'Box Name': 'Test box' }],
+    Screws: [{ 'Storage ID': 'S1-B01', Size: 'M3', Amount: 4 }],
     'Other Items': [
       { 'Storage ID': 'S1-B01', Name: 'Fractional item', 'Item Type': 'Other', Amount: 1.5 },
       { 'Storage ID': 'S1-B01', Name: 'Test washer', 'Item Type': 'Washer', Size: '3x5x0.1', Amount: 2.5 }
@@ -90,4 +91,22 @@ test('Excel imports fractional quantities, bearings and washers into PostgreSQL'
   assert.equal(unified.rows[1].category, 'Washer');
   assert.equal(unified.rows[1].quantity, 2.5);
   assert.equal(Number(unified.rows[1].thickness), 0.1);
+
+  const before = (await database.query('SELECT id FROM boxes')).rows[0].id;
+  await run(process.execPath, ['utils/importExcel.js', file], { cwd: serverDirectory, env });
+  assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM screws')).rows[0].count, 2);
+  await database.query("INSERT INTO catalog_enums (id, enum_type, value) VALUES ('00000000-0000-4000-8000-000000000002', 'test', 'stale')");
+  await run(process.execPath, ['utils/importExcel.js', '--empty', file], { cwd: serverDirectory, env });
+  assert.equal((await database.query('SELECT id FROM boxes')).rows[0].id, before);
+  assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM screws')).rows[0].count, 1);
+  assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM washers_bearings')).rows[0].count, 2);
+  assert.equal((await database.query("SELECT COUNT(*)::int AS count FROM catalog_enums WHERE enum_type = 'test'")).rows[0].count, 0);
+  for (let index = 0; index < 2; index++) {
+    await run(process.execPath, ['utils/importExcel.js', file, '--clean'], { cwd: serverDirectory, env });
+    assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM screws')).rows[0].count, 1);
+    assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM washers_bearings')).rows[0].count, 2);
+    assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM boxes')).rows[0].count, 1);
+    assert.equal((await database.query('SELECT COUNT(*)::int AS count FROM categories')).rows[0].count, 7);
+  }
+  assert.notEqual((await database.query('SELECT id FROM boxes')).rows[0].id, before);
 });

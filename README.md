@@ -129,6 +129,24 @@ Access the app at http://localhost:5173
 
 ## Data Structure
 
+### Clean re-import
+
+By default, imports can append duplicate items (for example, screws). To replace all application data with the workbook:
+
+```bash
+cd server
+npm run import-excel -- ../g.xlsx --clean
+
+# Keep existing shelves and boxes, but clear everything else before importing:
+npm run import-excel -- ../g.xlsx --empty
+```
+
+`--clean` deletes **all inventory items, shelves, boxes, categories, and dropdown values** from the configured database before importing. It preserves the tables and schema. Back up the database first and stop other application writers during the import. The clear operation is atomic, but the subsequent import is not: an import failure can leave partially imported data. Fix the error and retry with `--clean`.
+
+`--empty` preserves existing shelves and boxes (including their IDs), but clears all inventory items, categories, and dropdown values before importing. Shelves and boxes from the workbook are then reused or created as usual. Both reset modes remove data not present in the workbook, except the locations preserved by `--empty`. The flags cannot be combined.
+
+The workbook is read and required sheets are checked before clearing. Missing files, unreadable workbooks, or missing required sheets do not clear data. Use `npm run import-excel -- --help` for usage. Omitting both flags preserves the existing import behavior.
+
 Your Excel file has the following structure:
 
 | Sheet | Purpose | Key Fields |
