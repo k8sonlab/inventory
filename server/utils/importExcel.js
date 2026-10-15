@@ -369,7 +369,7 @@ async function importExcelData(filePath) {
     // Query for Washers & Bearings category (may not be in initial categoryMap)
     let wbCategory = categoryMap['Washers & Bearings'];
     if (!wbCategory) {
-      const wbCat = await queryOne('SELECT id FROM categories WHERE name = ?', ['Washers & Bearings']);
+      const wbCat = await queryOne(`SELECT id FROM categories WHERE name = ${isPostgresDB() ? '$1' : '?'}`, ['Washers & Bearings']);
       wbCategory = wbCat?.id;
     }
     
@@ -380,7 +380,7 @@ async function importExcelData(filePath) {
       const uniqueSubtypes = new Set();
       
       // Clear old enum values
-      await exec('DELETE FROM catalog_enums WHERE enum_type IN (?, ?)', ['washer_bearing_subtype', 'washer_bearing_material']);
+      await exec(`DELETE FROM catalog_enums WHERE enum_type IN (${isPostgresDB() ? '$1, $2' : '?, ?'})`, ['washer_bearing_subtype', 'washer_bearing_material']);
       
       // Collect bearing subtypes
       if (workbook.SheetNames.includes('Bearings')) {

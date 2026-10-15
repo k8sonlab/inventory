@@ -157,6 +157,8 @@ PostgreSQL pool connections time out after 2 seconds, and readiness queries time
 
 Run backend health endpoint tests with `cd server && npm test`.
 
+To also run the PostgreSQL Excel-import integration test, set `TEST_POSTGRES_URL` to a PostgreSQL connection URL when running `npm test`. The test creates and removes its own isolated database; the test user needs `CREATE DATABASE` permission. It covers existing integer-column migration, fractional quantities, bearings, and washers. Without this variable, the integration test is skipped.
+
 ### Items
 - `GET /api/items` - List all items (supports filters: search, category_id, box_id, item_type)
 - `GET /api/items/:id` - Get single item

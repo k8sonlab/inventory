@@ -478,13 +478,13 @@ async function runMigrations() {
     // Clean up legacy Bearings category and old bearing items
     try {
       // Find and delete old Bearings category and its items
-      const bearingsResult = await query('SELECT id FROM categories WHERE name = ?', ['Bearings']);
+      const bearingsResult = await query(`SELECT id FROM categories WHERE name = ${isPostgresDB() ? '$1' : '?'}`, ['Bearings']);
       if (bearingsResult && bearingsResult.length > 0) {
         const bearingsCatId = bearingsResult[0].id;
         // Delete items with old Bearings category
-        await exec('DELETE FROM items WHERE category_id = ? AND item_type = ?', [bearingsCatId, 'Bearings']);
+        await exec(`DELETE FROM items WHERE category_id = ${isPostgresDB() ? '$1' : '?'} AND item_type = ${isPostgresDB() ? '$2' : '?'}`, [bearingsCatId, 'Bearings']);
         // Delete the Bearings category itself
-        await exec('DELETE FROM categories WHERE id = ?', [bearingsCatId]);
+        await exec(`DELETE FROM categories WHERE id = ${isPostgresDB() ? '$1' : '?'}`, [bearingsCatId]);
         console.log('🧹 Cleaned up legacy Bearings category');
       }
     } catch (e) {
