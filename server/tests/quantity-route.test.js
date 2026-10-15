@@ -38,6 +38,7 @@ const tables = {
   battery: 'batteries', other_item: 'other_items'
 };
 const id = randomUUID();
+const categoryId = randomUUID();
 let server;
 let baseUrl;
 const select = table => queryOne(`SELECT * FROM ${table} WHERE id = ${isPostgresDB() ? '$1' : '?'}`, [id]);
@@ -48,9 +49,10 @@ const patch = (body, itemId = id) => fetch(`${baseUrl}/api/items/${itemId}/quant
 before(async () => {
   await initializeDatabase();
   await runMigrations();
+  await exec(`INSERT INTO categories (id, name) VALUES (${isPostgresDB() ? '$1, $2' : '?, ?'})`, [categoryId, 'Search test']);
   for (const table of Object.values(tables)) {
-    const columns = ['id', 'quantity', 'notes'];
-    const values = [id, 3, 'Keep these notes'];
+    const columns = ['id', 'quantity', 'notes', 'category_id'];
+    const values = [id, 3, 'Keep these notes', categoryId];
     if (table !== 'batteries') { columns.push('name'); values.push('Keep this name'); }
     if (table === 'items') { columns.push('item_type', 'parameters'); values.push('Custom', '{"key":"keep"}'); }
     if (table === 'rc_parts') { columns.push('item_code'); values.push('Keep code'); }
@@ -98,6 +100,28 @@ test('every source type updates only its quantity and timestamp, preserving othe
     assert.equal(persisted.exec('SELECT quantity FROM screws')[0].values[0][0], 0);
     persisted.close();
   }
+});
+
+test('global and category search work for every source, JSON parameters, and numeric dimensions', async () => {
+  for (const filters of [
+    { search: 'kEeP' },
+    { search: 'kEeP', category_id: categoryId }
+  ]) {
+    const response = await fetch(`${baseUrl}/api/items?${new URLSearchParams(filters)}`);
+    assert.equal(response.status, 200);
+    const rows = await response.json();
+    assert.deepEqual(rows.map(row => row.source_type).sort(), Object.keys(tables).sort());
+    assert.equal(rows.find(row => row.source_type === 'washer_bearing').inner_diameter, 1.5);
+  }
+  const json = await fetch(`${baseUrl}/api/items?search=key`);
+  assert.equal(json.status, 200);
+  assert.deepEqual((await json.json()).map(row => row.source_type), ['item']);
+  const numeric = await fetch(`${baseUrl}/api/items?${new URLSearchParams({ search: '1.5', category_id: categoryId })}`);
+  assert.equal(numeric.status, 200);
+  assert.deepEqual((await numeric.json()).map(row => row.source_type), ['washer_bearing']);
+  const absent = await fetch(`${baseUrl}/api/items?search=definitely-no-match`);
+  assert.equal(absent.status, 200);
+  assert.deepEqual(await absent.json(), []);
 });
 
 test('invalid inputs and extra fields are rejected without changing data', async () => {

@@ -16,6 +16,8 @@ let db = null;
 let isPostgres = false;
 let SQL = null;
 
+const dimensionColumns = new Set(['id_inner', 'od', 'width', 'inner_diameter', 'outer_diameter', 'thickness']);
+
 /**
  * Database adapter - supports both SQLite (via sql.js) and PostgreSQL
  */
@@ -83,6 +85,15 @@ function saveSQLiteDatabase() {
 export async function query(sql, params = []) {
   if (isPostgres) {
     const result = await db.query(sql, params);
+    for (const row of result.rows) {
+      for (const column of dimensionColumns) {
+        if (typeof row[column] === 'string') {
+          const value = Number(row[column]);
+          if (!Number.isFinite(value)) throw new Error(`Invalid numeric dimension returned by PostgreSQL: ${column}`);
+          row[column] = value;
+        }
+      }
+    }
     return result.rows;
   } else {
     try {

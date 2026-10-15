@@ -16,6 +16,9 @@
       <button @click="showAddModal = true" class="btn-primary">+ Add Item</button>
     </div>
 
+    <p v-if="itemsError" class="items-error" role="alert">{{ itemsError }}</p>
+    <p v-if="itemsLoading" role="status">Loading items...</p>
+
     <div v-if="!filterCategory" class="category-summary">
       <div class="summary-header">
         <h3>Browse by category</h3>
@@ -263,7 +266,7 @@
           </tr>
         </tbody>
       </table>
-      <div v-if="items.length === 0" class="empty-state">
+      <div v-if="items.length === 0 && !itemsError && !itemsLoading" class="empty-state">
         <p>No items found. Try adjusting your search filters or add a new item.</p>
       </div>
       
@@ -716,6 +719,9 @@ export default {
   },
   setup(props) {
     const items = ref([]);
+    const itemsError = ref('');
+    const itemsLoading = ref(false);
+    let itemsRequest = 0;
     const categories = ref([]);
     const boxes = ref([]);
     const searchQuery = ref('');
@@ -824,14 +830,23 @@ export default {
     const sortOrder = ref('asc'); // 'asc' or 'desc'
 
     const loadItems = async () => {
+      const request = ++itemsRequest;
+      itemsError.value = '';
+      itemsLoading.value = true;
+      items.value = [];
       try {
         const response = await itemsService.getAll({
           search: searchQuery.value,
           category_id: filterCategory.value
         });
+        if (request !== itemsRequest) return;
         items.value = response.data || [];
       } catch (error) {
+        if (request !== itemsRequest) return;
         console.error('Error loading items:', error);
+        itemsError.value = error.response?.data?.error || 'Could not load items. Try changing the search or selecting the category again.';
+      } finally {
+        if (request === itemsRequest) itemsLoading.value = false;
       }
     };
 
@@ -1542,6 +1557,8 @@ export default {
 
     return {
       items,
+      itemsError,
+      itemsLoading,
       categories,
       boxes,
       searchQuery,
@@ -1857,6 +1874,13 @@ export default {
 .quantity {
   font-weight: 600;
   color: #27ae60;
+}
+
+.items-error {
+  color: #c0392b;
+  padding: 0.75rem;
+  background: #fdf0ee;
+  border-radius: 4px;
 }
 
 .details {

@@ -187,6 +187,8 @@ To also run the PostgreSQL Excel-import integration test and run the quantity AP
 
 Click a quantity in any category tab to edit it inline, then **Save** (or press Enter). **Cancel** or Escape discards the edit. Zero and fractional quantities are supported. Errors leave the editor open without reporting success; conflicting edits show the current quantity for review before retrying. No other item fields are updated.
 
+Search works across categories, including JSON item parameters and washer/bearing dimensions, with case-insensitive matching. PostgreSQL dimensions are returned as JSON numbers like SQLite dimensions, without fixed-scale trailing zeros. The item list shows loading and error states and ignores outdated responses when switching tabs or changing search quickly.
+
 #### Try quantity editing locally with SQLite
 
 Use a separate database to avoid changing your usual inventory. From `server/`:
