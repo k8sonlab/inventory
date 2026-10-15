@@ -239,6 +239,10 @@ shelves (1) ──→ (n) boxes ──→ (n) items ──→ categories
 - **SQLite**: Single `inventory.db` file in project root
 - **PostgreSQL**: Full relational database in your K8s cluster
 
+Quantities support fractional values such as `1.5` in Excel imports and the item editor. PostgreSQL uses `DOUBLE PRECISION` (returned as JSON numbers); SQLite uses `REAL` for new tables and also accepts fractions in existing integer-affinity columns. These are floating-point values, not exact financial decimals.
+
+Existing PostgreSQL integer quantity columns are upgraded automatically on backend startup or with `cd server && npm run migrate`. Run the migration before retrying an Excel import against an existing database; integer quantities and defaults are preserved.
+
 ## Customization
 
 ### Add New Item Type

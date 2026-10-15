@@ -607,7 +607,7 @@
 
           <div class="form-group">
             <label>Quantity</label>
-            <input v-model.number="formData.quantity" type="number" min="0" placeholder="Quantity" />
+            <input v-model.number="formData.quantity" type="number" min="0" step="any" placeholder="Quantity" />
           </div>
 
           <div class="form-group">
