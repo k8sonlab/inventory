@@ -122,6 +122,20 @@ helm install inventory ./helm/inventory \
 
 ### 4. Verify Deployment
 
+Configure Gateway attachments through `httpRoute.parentRefs` in your Helm values:
+
+```yaml
+httpRoute:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: inventory-gateway
+      namespace: default
+      sectionName: http
+```
+
+The chart renders this list directly, supporting multiple parents and optional fields such as `namespace`, `sectionName`, and `port`. An omitted namespace refers to the HTTPRoute's namespace. The former `httpRoute.gatewayName` setting is no longer used.
+
 ```bash
 # Check deployment status
 kubectl get deployments -n inventory
@@ -187,7 +201,9 @@ gh workflow run deploy.yml
 ### Frontend Image (Nginx Alpine)
 
 - **Base**: `nginx:alpine`
-- **Port**: 80
+- **Container port**: 5174 (Nginx, container healthcheck, and Kubernetes probes)
+- **Service port**: 80, forwarded to container port 5174
+- **Container user**: Unchanged (root). The unprivileged listening port prepares for a future non-root setup; Nginx PID/cache permissions still need configuration before changing the user.
 - **API Proxy**: `/api/*` → backend service
 - **SPA Routing**: Fallback to `index.html`
 - **Caching**: Static assets cached for 1 year

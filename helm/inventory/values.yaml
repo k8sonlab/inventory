@@ -77,13 +77,8 @@ backend:
 ## Gateway API - HTTPRoute configuration
 httpRoute:
   enabled: true
-  gatewayName: inventory-gateway
   hostname: inventory.example.com
-  parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: inventory-gateway
-      namespace: default
+  parentRefs: []
 
 ## Persistent storage
 persistence:

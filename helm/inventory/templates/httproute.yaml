@@ -7,10 +7,7 @@ metadata:
     {{- include "inventory.labels" . | nindent 4 }}
 spec:
   parentRefs:
-  - group: gateway.networking.k8s.io
-    kind: Gateway
-    name: {{ .Values.httpRoute.gatewayName }}
-    namespace: {{ .Release.Namespace }}
+    {{- toYaml .Values.httpRoute.parentRefs | nindent 4 }}
   hostnames:
   - {{ .Values.httpRoute.hostname | quote }}
   rules:
