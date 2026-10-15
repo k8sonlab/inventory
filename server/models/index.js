@@ -3,6 +3,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 const NOW = () => isPostgresDB() ? 'NOW()' : "datetime('now')";
 
+function integerQuantity(value = 0) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0 || number > 2147483647) {
+    throw new Error('Quantity must be a non-negative number no greater than 2147483647');
+  }
+  return Math.floor(number);
+}
+
 const quantityTables = {
   item: 'items',
   rc_part: 'rc_parts',
@@ -98,7 +106,7 @@ export class Item {
       sql += `?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, name, item_type, category_id, box_id, quantity || 0, notes || null, JSON.stringify(parameters || {})]);
+    await exec(sql, [id, name, item_type, category_id, box_id, integerQuantity(quantity ?? 0), notes || null, JSON.stringify(parameters || {})]);
     return await Item.getById(id);
   }
 
@@ -114,7 +122,7 @@ export class Item {
       sql += `?, item_type = ?, category_id = ?, box_id = ?, quantity = ?, notes = ?, parameters = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [name, item_type, category_id, box_id, quantity, notes || null, JSON.stringify(parameters || {}), id]);
+    await exec(sql, [name, item_type, category_id, box_id, integerQuantity(quantity ?? 0), notes || null, JSON.stringify(parameters || {}), id]);
     return await Item.getById(id);
   }
 
@@ -329,7 +337,7 @@ export class RCPart {
       sql += `?, ?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, name || null, company || null, model || null, item_code || 'RC Part', box_id || null, category_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, name || null, company || null, model || null, item_code || 'RC Part', box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null]);
     return await RCPart.getById(id);
   }
 
@@ -345,7 +353,7 @@ export class RCPart {
       sql += `?, company = ?, model = ?, item_code = ?, box_id = ?, category_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [name || null, company || null, model || null, item_code || 'RC Part', box_id || null, category_id || null, quantity, notes || null, id]);
+    await exec(sql, [name || null, company || null, model || null, item_code || 'RC Part', box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null, id]);
     return await RCPart.getById(id);
   }
 
@@ -528,7 +536,7 @@ export class Screw {
       sql += `?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, name || null, size || null, length || null, head_type || null, drive_type || null, thread_type || null, color || null, material || null, box_id || null, category_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, name || null, size || null, length || null, head_type || null, drive_type || null, thread_type || null, color || null, material || null, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null]);
     return await Screw.getById(id);
   }
 
@@ -544,7 +552,7 @@ export class Screw {
       sql += `?, size = ?, length = ?, head_type = ?, drive_type = ?, thread_type = ?, color = ?, material = ?, box_id = ?, category_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [name || null, size || null, length || null, head_type || null, drive_type || null, thread_type || null, color || null, material || null, box_id || null, category_id || null, quantity || 0, notes || null, id]);
+    await exec(sql, [name || null, size || null, length || null, head_type || null, drive_type || null, thread_type || null, color || null, material || null, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null, id]);
     return await Screw.getById(id);
   }
 
@@ -615,7 +623,7 @@ export class Nut {
       sql += `?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, name || null, size || null, type || null, color || null, has_washer ? 1 : 0, box_id || null, category_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, name || null, size || null, type || null, color || null, has_washer ? 1 : 0, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null]);
     return await Nut.getById(id);
   }
 
@@ -631,7 +639,7 @@ export class Nut {
       sql += `?, size = ?, type = ?, color = ?, has_washer = ?, box_id = ?, category_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [name || null, size || null, type || null, color || null, has_washer ? 1 : 0, box_id || null, category_id || null, quantity || 0, notes || null, id]);
+    await exec(sql, [name || null, size || null, type || null, color || null, has_washer ? 1 : 0, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null, id]);
     return await Nut.getById(id);
   }
 
@@ -701,7 +709,7 @@ export class Bearing {
       sql += `?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, name || null, type || null, seal_type || null, id_inner || null, od || null, width || null, flanged ? 1 : 0, box_id || null, category_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, name || null, type || null, seal_type || null, id_inner || null, od || null, width || null, flanged ? 1 : 0, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null]);
     return await Bearing.getById(id);
   }
 
@@ -717,7 +725,7 @@ export class Bearing {
       sql += `?, type = ?, seal_type = ?, id_inner = ?, od = ?, width = ?, flanged = ?, box_id = ?, category_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [name || null, type || null, seal_type || null, id_inner || null, od || null, width || null, flanged ? 1 : 0, box_id || null, category_id || null, quantity || 0, notes || null, id]);
+    await exec(sql, [name || null, type || null, seal_type || null, id_inner || null, od || null, width || null, flanged ? 1 : 0, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null, id]);
     return await Bearing.getById(id);
   }
 
@@ -798,7 +806,7 @@ export class OilPaste {
       sql += `?, ?, ?, ?, ?, ?, ?, ?, ?, ${now}, ${now})`;
     }
     
-    await exec(sql, [id, name || null, company || null, type || null, characteristic || null, box_id || null, category_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, name || null, company || null, type || null, characteristic || null, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null]);
     return await OilPaste.getById(id);
   }
 
@@ -814,7 +822,7 @@ export class OilPaste {
       sql += `?, company = ?, type = ?, characteristic = ?, box_id = ?, category_id = ?, quantity = ?, notes = ?, updated_at = ${now} WHERE id = ?`;
     }
     
-    await exec(sql, [name || null, company || null, type || null, characteristic || null, box_id || null, category_id || null, quantity || 0, notes || null, id]);
+    await exec(sql, [name || null, company || null, type || null, characteristic || null, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null, id]);
     return await OilPaste.getById(id);
   }
 
@@ -903,7 +911,7 @@ export class Battery {
       rechargeableValue = rechargeable ? 1 : 0;  // SQLite expects integer
     }
     
-    await exec(sql, [id, size || null, company || null, model || null, type || null, expiration_date || null, mah || null, rechargeableValue, box_id || null, category_id || null, quantity || 0, notes || null]);
+    await exec(sql, [id, size || null, company || null, model || null, type || null, expiration_date || null, mah || null, rechargeableValue, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null]);
     return await Battery.getById(id);
   }
 
@@ -927,7 +935,7 @@ export class Battery {
       rechargeableValue = rechargeable ? 1 : 0;  // SQLite expects integer
     }
     
-    const params = [size || null, company || null, model || null, type || null, expiration_date || null, mah || null, rechargeableValue, box_id || null, category_id || null, quantity || 0, notes || null, id];
+    const params = [size || null, company || null, model || null, type || null, expiration_date || null, mah || null, rechargeableValue, box_id || null, category_id || null, integerQuantity(quantity ?? 0), notes || null, id];
     
     await exec(sql, params);
     return await Battery.getById(id);
@@ -996,7 +1004,7 @@ export class OtherItem {
       INSERT INTO other_items (id, item_type, size, name, company, quantity, box_id, category_id, notes, created_at, updated_at)
       VALUES (${isPostgresDB() ? '$1, $2, $3, $4, $5, $6, $7, $8, $9' : '?, ?, ?, ?, ?, ?, ?, ?, ?'}, ${now}, ${now})
     `;
-    const params = [id, item_type || null, size || null, name || null, company || null, quantity || 0, box_id || null, category_id || null, notes || null];
+    const params = [id, item_type || null, size || null, name || null, company || null, integerQuantity(quantity ?? 0), box_id || null, category_id || null, notes || null];
     await exec(sql, params);
     return await OtherItem.getById(id);
   }
@@ -1016,7 +1024,7 @@ export class OtherItem {
           updated_at = ${NOW()}
       WHERE id = ${isPostgresDB() ? '$9' : '?'}
     `;
-    const params = [item_type || null, size || null, name || null, company || null, quantity || 0, box_id || null, category_id || null, notes || null, id];
+    const params = [item_type || null, size || null, name || null, company || null, integerQuantity(quantity ?? 0), box_id || null, category_id || null, notes || null, id];
     await exec(sql, params);
     return await OtherItem.getById(id);
   }
@@ -1107,7 +1115,7 @@ export class WasherBearing {
       data.thickness || data.width || null,
       data.subtype || data.type || null,
       data.material || null,
-      data.quantity || 0,
+      integerQuantity(data.quantity ?? 0),
       data.box_id || null,
       data.category_id || null,
       data.notes || null
@@ -1165,7 +1173,7 @@ export class WasherBearing {
     }
     if (data.quantity !== undefined) {
       updates.push(`quantity = ${ph()}`);
-      params.push(data.quantity);
+      params.push(integerQuantity(data.quantity));
     }
     if (data.box_id !== undefined) {
       updates.push(`box_id = ${ph()}`);

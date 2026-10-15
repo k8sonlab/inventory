@@ -6,7 +6,8 @@
         v-model="draft"
         type="number"
         min="0"
-        step="any"
+        step="1"
+        max="2147483647"
         required
         :disabled="saving"
         :aria-label="`Quantity for ${label}`"
@@ -63,8 +64,8 @@ export default {
     const save = async () => {
       if (saving.value) return;
       const quantity = Number(draft.value);
-      if (String(draft.value).trim() === '' || !Number.isFinite(quantity) || quantity < 0) {
-        error.value = 'Enter a non-negative quantity.';
+      if (String(draft.value).trim() === '' || !Number.isInteger(quantity) || quantity < 0 || quantity > 2147483647) {
+        error.value = 'Enter a whole-number quantity between 0 and 2147483647.';
         return;
       }
       if (quantity === expectedQuantity.value) {

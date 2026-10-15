@@ -81,19 +81,19 @@ after(async () => {
 test('every source type updates only its quantity and timestamp, preserving other data', async () => {
   for (const [source_type, table] of Object.entries(tables)) {
     const before = await select(table);
-    const response = await patch({ source_type, quantity: 1.5, expected_quantity: 3 });
+    const response = await patch({ source_type, quantity: 1, expected_quantity: 3 });
     assert.equal(response.status, 200, source_type);
-    assert.deepEqual(await response.json(), { id, source_type, quantity: 1.5 });
+    assert.deepEqual(await response.json(), { id, source_type, quantity: 1 });
     const after = await select(table);
     for (const field of Object.keys(before).filter(field => !['quantity', 'updated_at'].includes(field))) {
       assert.deepEqual(after[field], before[field], `${source_type}.${field}`);
     }
-    assert.equal(after.quantity, 1.5);
+    assert.equal(after.quantity, 1);
   }
-  const zero = await patch({ source_type: 'screw', quantity: 0, expected_quantity: 1.5 });
+  const zero = await patch({ source_type: 'screw', quantity: 0, expected_quantity: 1 });
   assert.equal(zero.status, 200);
   assert.equal((await select('screws')).quantity, 0);
-  assert.equal((await select('nuts')).quantity, 1.5);
+  assert.equal((await select('nuts')).quantity, 1);
   if (!isPostgresDB()) {
     const SQL = await initSqlJs();
     const persisted = new SQL.Database(await readFile(dbFile));
@@ -129,6 +129,8 @@ test('invalid inputs and extra fields are rejected without changing data', async
   const valid = { source_type: 'screw', quantity: 2, expected_quantity: 0 };
   for (const body of [
     {}, { ...valid, quantity: -1 }, { ...valid, quantity: '2' },
+    { ...valid, quantity: 1.5 }, { ...valid, quantity: 2147483648 },
+    { ...valid, expected_quantity: 1.5 },
     { ...valid, quantity: null }, { ...valid, quantity: '' },
     { ...valid, expected_quantity: '0' }, { ...valid, expected_quantity: null },
     { ...valid, source_type: '__proto__' }, { ...valid, source_type: 'constructor' },
@@ -139,6 +141,13 @@ test('invalid inputs and extra fields are rejected without changing data', async
     assert.ok((await response.json()).error);
   }
   assert.deepEqual(await select('screws'), before);
+  for (const method of ['POST', 'PUT']) {
+    const response = await fetch(`${baseUrl}/api/items${method === 'PUT' ? `/${id}` : ''}`, {
+      method, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_type: 'screw', quantity: 1.5 })
+    });
+    assert.equal(response.status, 400);
+  }
 });
 
 test('stale edits return 409 and missing items return 404', async () => {

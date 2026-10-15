@@ -3,6 +3,14 @@ import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem, Washer
 
 const router = express.Router();
 
+function validateQuantity(req, res, next) {
+  if (req.body?.quantity !== undefined &&
+      (!Number.isInteger(req.body.quantity) || req.body.quantity < 0 || req.body.quantity > 2147483647)) {
+    return res.status(400).json({ error: 'Quantity must be a whole number between 0 and 2147483647' });
+  }
+  next();
+}
+
 // Get all items with optional filters (includes RC Parts)
 router.get('/', async (req, res) => {
   try {
@@ -31,7 +39,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create item
-router.post('/', async (req, res) => {
+router.post('/', validateQuantity, async (req, res) => {
   try {
     let item;
     if (req.body.source_type === 'screw' || req.body.item_type === 'Screws') {
@@ -63,10 +71,10 @@ router.post('/', async (req, res) => {
 router.patch('/:id/quantity', async (req, res) => {
   const { source_type, quantity, expected_quantity } = req.body || {};
   if (!isQuantitySourceType(source_type) ||
-      typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0 ||
-      typeof expected_quantity !== 'number' || !Number.isFinite(expected_quantity) ||
+      !Number.isInteger(quantity) || quantity < 0 || quantity > 2147483647 ||
+      !Number.isInteger(expected_quantity) ||
       Object.keys(req.body || {}).some(key => !['source_type', 'quantity', 'expected_quantity'].includes(key))) {
-    return res.status(400).json({ error: 'Provide a valid source_type, a non-negative numeric quantity, and numeric expected_quantity only.' });
+    return res.status(400).json({ error: 'Provide a valid source_type, a whole-number quantity between 0 and 2147483647, and integer expected_quantity only.' });
   }
   try {
     const result = await updateItemQuantity(req.params.id, source_type, quantity, expected_quantity);
@@ -82,7 +90,7 @@ router.patch('/:id/quantity', async (req, res) => {
 });
 
 // Update item
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateQuantity, async (req, res) => {
   try {
     let item;
     if (req.body.source_type === 'screw' || req.body.item_type === 'Screws') {

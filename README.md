@@ -175,7 +175,7 @@ PostgreSQL pool connections time out after 2 seconds, and readiness queries time
 
 Run backend health endpoint tests with `cd server && npm test`.
 
-To also run the PostgreSQL Excel-import integration test and run the quantity API tests against PostgreSQL, set `TEST_POSTGRES_URL` to a PostgreSQL connection URL when running `npm test`. Tests create and remove their own isolated databases; the test user needs `CREATE DATABASE` permission. They cover existing integer-column migration, fractional quantities, bearings, washers, and quantity-only updates for every item source. Without this variable, the import integration test is skipped and quantity API tests use SQLite.
+To also run the PostgreSQL Excel-import integration test and run the quantity API tests against PostgreSQL, set `TEST_POSTGRES_URL` to a PostgreSQL connection URL when running `npm test`. Tests create and remove their own isolated databases; the test user needs `CREATE DATABASE` permission. They cover floating-to-integer quantity migration, rounding down imported quantities, decimal dimensions, and quantity-only updates for every item source. Without this variable, the import integration test is skipped and quantity API tests use SQLite.
 
 ### Items
 - `GET /api/items` - List all items (supports filters: search, category_id, box_id, item_type)
@@ -183,9 +183,9 @@ To also run the PostgreSQL Excel-import integration test and run the quantity AP
 - `POST /api/items` - Create item
 - `PUT /api/items/:id` - Update item
 - `DELETE /api/items/:id` - Delete item
-- `PATCH /api/items/:id/quantity` - Update only quantity and its modification timestamp. Send `{ "source_type": "screw", "quantity": 1.5, "expected_quantity": 3 }`. Supports all item sources. Non-negative numeric quantities are required; unrelated fields are rejected. Stale edits return HTTP 409 with the current quantity.
+- `PATCH /api/items/:id/quantity` - Update only quantity and its modification timestamp. Send `{ "source_type": "screw", "quantity": 1, "expected_quantity": 3 }`. Supports all item sources. Integer quantities between 0 and 2147483647 are required; fractions and unrelated fields are rejected. Stale edits return HTTP 409 with the current quantity.
 
-Click a quantity in any category tab to edit it inline, then **Save** (or press Enter). **Cancel** or Escape discards the edit. Zero and fractional quantities are supported. Errors leave the editor open without reporting success; conflicting edits show the current quantity for review before retrying. No other item fields are updated.
+Click a quantity in any category tab to edit it inline, then **Save** (or press Enter). **Cancel** or Escape discards the edit. Quantities are non-negative whole numbers, including zero. Errors leave the editor open without reporting success; conflicting edits show the current quantity for review before retrying. No other item fields are updated.
 
 Search works across categories, including JSON item parameters and washer/bearing dimensions, with case-insensitive matching. PostgreSQL dimensions are returned as JSON numbers like SQLite dimensions, without fixed-scale trailing zeros. The item list shows loading and error states and ignores outdated responses when switching tabs or changing search quickly.
 
@@ -275,9 +275,9 @@ shelves (1) ──→ (n) boxes ──→ (n) items ──→ categories
 - **SQLite**: Single `inventory.db` file in project root
 - **PostgreSQL**: Full relational database in your K8s cluster
 
-Quantities support fractional values such as `1.5` in Excel imports and the item editor. PostgreSQL uses `DOUBLE PRECISION` (returned as JSON numbers); SQLite uses `REAL` for new tables and also accepts fractions in existing integer-affinity columns. These are floating-point values, not exact financial decimals.
+Quantities use `INTEGER` columns in PostgreSQL and new SQLite tables. Existing SQLite tables keep their column affinity but their stored quantities are rounded down and application writes enforce whole numbers. Excel imports round fractional quantities down (`1.5` becomes `1`); API and item-editor writes reject fractions. Dimensions such as ID, OD, and thickness retain decimal precision.
 
-Existing PostgreSQL integer quantity columns are upgraded automatically on backend startup or with `cd server && npm run migrate`. Run the migration before retrying an Excel import against an existing database; integer quantities and defaults are preserved.
+Existing PostgreSQL floating/numeric quantity columns are converted to `INTEGER` automatically on backend startup or with `cd server && npm run migrate`, explicitly rounding down with `floor(quantity)`. SQLite migrations also round existing fractional quantities down. Whole-number values and defaults are preserved. Back up first: discarded fractional parts cannot be recovered by reversing the migration. Values outside PostgreSQL's integer range cause migration failure instead of silently overflowing.
 
 ## Customization
 

@@ -13,7 +13,7 @@ import XLSX from 'xlsx';
 const run = promisify(execFile);
 const serverDirectory = fileURLToPath(new URL('..', import.meta.url));
 
-test('Excel imports fractional quantities, bearings and washers into PostgreSQL', {
+test('Excel imports round quantities down and preserve decimal dimensions in PostgreSQL', {
   skip: !process.env.TEST_POSTGRES_URL,
   timeout: 30000
 }, async (t) => {
@@ -53,13 +53,15 @@ test('Excel imports fractional quantities, bearings and washers into PostgreSQL'
     import { runMigrations } from './migrations/run.js';
     await initializeDatabase();
     await runMigrations();
-    await exec('ALTER TABLE other_items ALTER COLUMN quantity TYPE INTEGER');
-    await exec("INSERT INTO other_items (id, name, quantity) VALUES ('00000000-0000-4000-8000-000000000001', 'Existing item', 3)");
+    await exec('ALTER TABLE other_items ALTER COLUMN quantity TYPE DOUBLE PRECISION');
+    await exec("INSERT INTO other_items (id, name, quantity) VALUES ('00000000-0000-4000-8000-000000000001', 'Existing item', 1.5)");
     await runMigrations();
     await closeDatabase();
   `], { cwd: serverDirectory, env });
   const existing = await database.query("SELECT quantity FROM other_items WHERE name = 'Existing item'");
-  assert.equal(existing.rows[0].quantity, 3);
+  assert.equal(existing.rows[0].quantity, 1);
+  const column = await database.query("SELECT data_type FROM information_schema.columns WHERE table_name = 'other_items' AND column_name = 'quantity'");
+  assert.equal(column.rows[0].data_type, 'integer');
 
   const workbook = XLSX.utils.book_new();
   const sheets = {
@@ -81,15 +83,15 @@ test('Excel imports fractional quantities, bearings and washers into PostgreSQL'
   const result = await run(process.execPath, ['utils/importExcel.js', file], { cwd: serverDirectory, env });
   assert.match(result.stdout, /All data imported successfully/);
   const other = await database.query("SELECT quantity FROM other_items WHERE name = 'Fractional item'");
-  assert.equal(other.rows[0].quantity, 1.5);
+  assert.equal(other.rows[0].quantity, 1);
   const unified = await database.query('SELECT category, quantity, inner_diameter, thickness FROM washers_bearings ORDER BY category');
   assert.equal(unified.rows.length, 2);
   assert.equal(unified.rows[0].category, 'Bearing');
-  assert.equal(unified.rows[0].quantity, 1.5);
+  assert.equal(unified.rows[0].quantity, 1);
   assert.equal(Number(unified.rows[0].inner_diameter), 1.5);
   assert.equal(Number(unified.rows[0].thickness), 0.25);
   assert.equal(unified.rows[1].category, 'Washer');
-  assert.equal(unified.rows[1].quantity, 2.5);
+  assert.equal(unified.rows[1].quantity, 2);
   assert.equal(Number(unified.rows[1].thickness), 0.1);
 
   const before = (await database.query('SELECT id FROM boxes')).rows[0].id;

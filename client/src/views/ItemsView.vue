@@ -612,7 +612,7 @@
 
           <div class="form-group">
             <label>Quantity</label>
-            <input v-model.number="formData.quantity" type="number" min="0" step="any" placeholder="Quantity" />
+            <input v-model.number="formData.quantity" type="number" min="0" max="2147483647" step="1" placeholder="Quantity" />
           </div>
 
           <div class="form-group">

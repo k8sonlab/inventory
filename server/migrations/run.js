@@ -48,7 +48,7 @@ async function runMigrations() {
           item_type VARCHAR(100),
           category_id UUID REFERENCES categories(id),
           box_id UUID REFERENCES boxes(id),
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           parameters JSONB,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -69,7 +69,7 @@ async function runMigrations() {
           company VARCHAR(255),
           model VARCHAR(255),
           item_code VARCHAR(255) NOT NULL,
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -87,7 +87,7 @@ async function runMigrations() {
           thread_type VARCHAR(255),
           color VARCHAR(255),
           material VARCHAR(255),
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -102,7 +102,7 @@ async function runMigrations() {
           type VARCHAR(255),
           color VARCHAR(255),
           has_washer BOOLEAN DEFAULT false,
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -119,7 +119,7 @@ async function runMigrations() {
           od DECIMAL(10, 3),
           width DECIMAL(10, 3),
           flanged BOOLEAN DEFAULT false,
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -134,7 +134,7 @@ async function runMigrations() {
           od DECIMAL(10, 3),
           width DECIMAL(10, 3),
           flanged BOOLEAN DEFAULT false,
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -151,7 +151,7 @@ async function runMigrations() {
           thickness DECIMAL(10, 3),
           subtype VARCHAR(255),
           material VARCHAR(255),
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -165,7 +165,7 @@ async function runMigrations() {
           company VARCHAR(255),
           type VARCHAR(255),
           characteristic TEXT,
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -182,7 +182,7 @@ async function runMigrations() {
           expiration_date DATE,
           mah INTEGER,
           rechargeable BOOLEAN DEFAULT FALSE,
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -196,7 +196,7 @@ async function runMigrations() {
           name VARCHAR(255),
           size VARCHAR(255),
           company VARCHAR(255),
-          quantity DOUBLE PRECISION DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id UUID REFERENCES boxes(id),
           category_id UUID REFERENCES categories(id),
@@ -254,10 +254,10 @@ async function runMigrations() {
               AND table_name IN ('items', 'rc_parts', 'screws', 'nuts', 'bearings',
                                  'washers_bearings', 'oil_pastes', 'batteries', 'other_items')
               AND column_name = 'quantity'
-              AND data_type IN ('smallint', 'integer', 'bigint')
+              AND data_type IN ('smallint', 'bigint', 'real', 'double precision', 'numeric')
           LOOP
             EXECUTE format(
-              'ALTER TABLE %I.%I ALTER COLUMN quantity TYPE DOUBLE PRECISION USING quantity::double precision',
+              'ALTER TABLE %I.%I ALTER COLUMN quantity TYPE INTEGER USING floor(quantity)::integer',
               quantity_column.table_schema, quantity_column.table_name
             );
           END LOOP;
@@ -297,7 +297,7 @@ async function runMigrations() {
           item_type TEXT,
           category_id TEXT REFERENCES categories(id),
           box_id TEXT REFERENCES boxes(id),
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           parameters TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -318,7 +318,7 @@ async function runMigrations() {
           company TEXT,
           model TEXT,
           item_code TEXT NOT NULL,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -336,7 +336,7 @@ async function runMigrations() {
           thread_type TEXT,
           color TEXT,
           material TEXT,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -351,7 +351,7 @@ async function runMigrations() {
           type TEXT,
           color TEXT,
           has_washer BOOLEAN DEFAULT 0,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -368,7 +368,7 @@ async function runMigrations() {
           od REAL,
           width REAL,
           flanged BOOLEAN DEFAULT 0,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -385,7 +385,7 @@ async function runMigrations() {
           thickness REAL,
           subtype TEXT,
           material TEXT,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -399,7 +399,7 @@ async function runMigrations() {
           company TEXT,
           type TEXT,
           characteristic TEXT,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -416,7 +416,7 @@ async function runMigrations() {
           expiration_date DATE,
           mah INTEGER,
           rechargeable INTEGER DEFAULT 0,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -430,7 +430,7 @@ async function runMigrations() {
           name TEXT,
           size TEXT,
           company TEXT,
-          quantity REAL DEFAULT 0,
+          quantity INTEGER DEFAULT 0,
           notes TEXT,
           box_id TEXT REFERENCES boxes(id),
           category_id TEXT REFERENCES categories(id),
@@ -473,6 +473,10 @@ async function runMigrations() {
       ];
 
       await execMultiple(statements);
+      await execMultiple([
+        'items', 'rc_parts', 'screws', 'nuts', 'bearings', 'washers_bearings',
+        'oil_pastes', 'batteries', 'other_items'
+      ].map(table => `UPDATE ${table} SET quantity = CAST(quantity AS INTEGER) - CASE WHEN quantity < 0 THEN 1 ELSE 0 END WHERE quantity != CAST(quantity AS INTEGER)`));
     }
 
     // Clean up legacy Bearings category and old bearing items
