@@ -1,0 +1,113 @@
+## Global settings
+global:
+  environment: production
+
+## Frontend (Vue.js + Vite)
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/k8sonlab/inventory-client
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 5174
+  ingress:
+    enabled: false
+    className: istio
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+## Backend (Node.js + Express)
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/k8sonlab/inventory-server
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: PORT
+      value: "3000"
+    - name: LOG_LEVEL
+      value: "info"
+    # Example with ConfigMapRef:
+    # - name: DATABASE_CONFIG
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       name: db-config
+    #       key: connection-string
+    # Example with SecretRef:
+    # - name: DB_PASSWORD
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: db-credentials
+    #       key: password
+  database:
+    path: /data/inventory.db
+  # The image runs as the unprivileged "node" user (UID/GID 1000); fsGroup makes mounted volumes writable.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+## Gateway API - HTTPRoute configuration
+httpRoute:
+  enabled: true
+  hostname: inventory.example.com
+  parentRefs: []
+
+## Persistent storage
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: standard
+  path: /data
+
+## Health checks
+healthCheck:
+  backend:
+    enabled: true
+    path: /healthz
+    readinessPath: /healthz/ready
+    readinessTimeoutSeconds: 5
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  frontend:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
