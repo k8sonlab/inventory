@@ -1,5 +1,5 @@
 <template>
-  <ModalShell :title="editing ? 'Edit Item' : 'Add New Item'" @close="emit('close')">
+  <ModalShell :title="editing ? 'Edit Item' : 'Add New Item'" wide @close="emit('close')">
     <form class="modal-form" @submit.prevent="save">
       <div class="form-group">
         <label>Item Type *</label>
@@ -9,7 +9,7 @@
         </select>
       </div>
 
-      <div v-if="type" :class="type.cssClass">
+      <div v-if="type" class="type-fields" :class="type.cssClass">
         <div v-for="field in type.fields" :key="field.key" class="form-group" :class="field.groupClass">
           <label v-if="field.kind === 'checkbox'" :class="field.labelClass">
             <input v-model="valuesFor(field)[field.key]" type="checkbox" />
@@ -58,7 +58,7 @@
         <input v-model.number="common.quantity" type="number" min="0" max="2147483647" step="1" placeholder="Quantity" />
       </div>
 
-      <div class="form-group">
+      <div class="form-group notes-group">
         <label>Notes</label>
         <textarea v-model="common.notes" placeholder="Additional notes"></textarea>
       </div>
@@ -85,16 +85,19 @@ const props = defineProps({
   // The item being edited, or null to add a new one
   item: { type: Object, default: null },
   categories: { type: Array, default: () => [] },
-  boxes: { type: Array, default: () => [] }
+  boxes: { type: Array, default: () => [] },
+  categoryName: { type: String, default: '' }
 });
 const emit = defineEmits(['saved', 'close']);
 
 const editing = computed(() => Boolean(props.item));
-const initialType = props.item ? formTypeForItem(props.item) : null;
+const initialType = props.item
+  ? formTypeForItem(props.item)
+  : FORM_TYPES.find((option) => option.belongsTo(props.categoryName));
 
 const typeKey = ref(initialType?.key ?? '');
 const common = ref(props.item ? commonFromItem(props.item) : blankCommon());
-const fields = ref(initialType ? initialType.fromItem(props.item) : {});
+const fields = ref(initialType ? (props.item ? initialType.fromItem(props.item) : initialType.blank()) : {});
 const saving = ref(false);
 
 const type = computed(() => formTypeByKey(typeKey.value));
@@ -137,11 +140,23 @@ const save = async () => {
 
 <style scoped>
 .modal-form {
-  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  padding: 1.25rem;
+}
+
+.type-fields {
+  display: contents;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  min-width: 0;
+}
+
+.notes-group,
+.modal-actions {
+  grid-column: 1 / -1;
 }
 
 .form-group label {
@@ -172,7 +187,7 @@ const save = async () => {
 
 .form-group textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 60px;
 }
 
 .checkbox-label {
@@ -184,7 +199,7 @@ const save = async () => {
 }
 
 .checkbox-group {
-  margin-bottom: 1rem;
+  align-self: center;
 }
 
 .checkbox-group .checkbox-label input[type="checkbox"] {
@@ -201,7 +216,6 @@ const save = async () => {
 .modal-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 2rem;
 }
 
 .modal-actions button {
@@ -241,5 +255,17 @@ const save = async () => {
 
 .btn-secondary:hover {
   background: #7f8c8d;
+}
+
+@media (max-width: 900px) {
+  .modal-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>
