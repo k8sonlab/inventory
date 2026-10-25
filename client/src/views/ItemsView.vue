@@ -14,6 +14,7 @@
         </option>
       </select>
       <button class="btn-primary" @click="openAddForm">+ Add Item</button>
+      <button class="btn-primary" @click="showBulkForm = true">+ Add Multiple</button>
     </div>
 
     <p v-if="error" class="items-error" role="alert">{{ error }}</p>
@@ -57,11 +58,21 @@
 
     <NotesModal v-if="viewingNotes !== null" :notes="viewingNotes" @close="viewingNotes = null" />
 
+    <BulkItemFormModal
+      v-if="showBulkForm"
+      :categories="categories"
+      :boxes="boxes"
+      :category-name="currentCategory?.name ?? ''"
+      @saved="load()"
+      @close="showBulkForm = false"
+    />
+
     <ItemFormModal
       v-if="showForm"
       :item="editingItem"
       :categories="categories"
       :boxes="boxes"
+      :category-name="currentCategory?.name ?? ''"
       @saved="onSaved"
       @close="closeForm"
     />
@@ -72,6 +83,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import ItemsTable from '../components/ItemsTable.vue';
 import ItemFormModal from '../components/ItemFormModal.vue';
+import BulkItemFormModal from '../components/BulkItemFormModal.vue';
 import NotesModal from '../components/NotesModal.vue';
 import { itemsService, categoriesService, locationsService } from '../services/api.js';
 import { useItemsSearch } from '../composables/useItemsSearch.js';
@@ -150,6 +162,7 @@ const openNotes = (item) => {
 
 // Add and edit
 const showForm = ref(false);
+const showBulkForm = ref(false);
 const editingItem = ref(null);
 
 const openAddForm = () => {

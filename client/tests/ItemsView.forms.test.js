@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { enableAutoUnmount } from '@vue/test-utils';
+import { enableAutoUnmount, flushPromises } from '@vue/test-utils';
+import ItemsView from '../src/views/ItemsView.vue';
+import BulkItemFormModal from '../src/components/BulkItemFormModal.vue';
+import { mountWithHost } from './helpers.js';
 import { itemsService, categoriesService, locationsService, enumsService } from '../src/services/api.js';
 import { resetNotifications } from '../src/composables/useNotifications.js';
 import { ADD, BOXES, CATEGORIES, ENUMS, ROWS, SERVER_FIELDS, pick, runAdd, runEdit } from './formScenarios.js';
@@ -47,6 +50,146 @@ beforeEach(() => {
   categoriesService.getAll.mockResolvedValue({ data: CATEGORIES });
   locationsService.getBoxes.mockResolvedValue({ data: BOXES });
   enumsService.getValues.mockImplementation(async (type) => ({ data: ENUMS[type] || [] }));
+});
+
+describe('adding from the current category', () => {
+  it.each(CATEGORIES)('opens the $name form and saves into that category', async (category) => {
+    const wrapper = mountWithHost(ItemsView, { selectedCategory: category.id });
+    await flushPromises();
+    await wrapper.get('.search-bar button').trigger('click');
+    await flushPromises();
+
+    const form = wrapper.get('form.modal-form');
+    const expectedType = Object.entries(ADD).find(([, scenario]) => scenario.category === category.id);
+    expect(form.get('select').element.value).toBe(expectedType[1].itemType);
+    expect(wrapper.get('[role="dialog"]').classes()).toContain('modal-wide');
+    await form.trigger('submit');
+    await flushPromises();
+
+    expect(itemsService.create).toHaveBeenCalledWith(expect.objectContaining({
+      category_id: category.id,
+      source_type: expectedType[0]
+    }));
+    expect(wrapper.find('form.modal-form').exists()).toBe(false);
+  });
+
+  it('keeps the type chooser empty when browsing all categories', async () => {
+    const wrapper = mountWithHost(ItemsView);
+    await flushPromises();
+    await wrapper.get('.search-bar button').trigger('click');
+    expect(wrapper.get('form.modal-form select').element.value).toBe('');
+  });
+});
+
+describe('bulk entry', () => {
+  it('selects Screws when the category lookup finishes after opening the dialog', async () => {
+    let resolveCategories;
+    categoriesService.getAll.mockReturnValueOnce(new Promise((resolve) => { resolveCategories = resolve; }));
+    const wrapper = mountWithHost(ItemsView, { selectedCategory: 'c-screw' });
+    await flushPromises();
+    await wrapper.findAll('.search-bar button').find((button) => button.text().includes('Add Multiple')).trigger('click');
+    resolveCategories({ data: CATEGORIES });
+    await flushPromises();
+
+    expect(wrapper.get('[aria-label="Item Type"]').element.value).toBe('Screws');
+    expect(wrapper.findAll('.bulk-table tbody tr')).toHaveLength(2);
+    await wrapper.get('[aria-label="Shared Storage Box"]').setValue('box-1');
+    await wrapper.get('form.bulk-form').trigger('submit');
+    await flushPromises();
+    expect(itemsService.create).toHaveBeenCalledTimes(2);
+    for (const [payload] of itemsService.create.mock.calls) {
+      expect(payload).toMatchObject({ source_type: 'screw', category_id: 'c-screw' });
+    }
+  });
+
+  it.each(Object.keys(ADD))('adds multiple %s items using the single-item payload rules', async (source) => {
+    const scenario = ADD[source];
+    const wrapper = mountWithHost(ItemsView, { selectedCategory: scenario.category });
+    await flushPromises();
+    await wrapper.findAll('.search-bar button').find((button) => button.text().includes('Add Multiple')).trigger('click');
+    await flushPromises();
+    expect(wrapper.get('[aria-label="Item Type"]').element.value).toBe(scenario.itemType);
+    await wrapper.get('[aria-label="Shared Storage Box"]').setValue('box-1');
+    const rows = wrapper.findAll('.bulk-table tbody tr');
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      for (const [, label, value] of scenario.fields) {
+        await row.get(`[aria-label="${label}"]`).setValue(value);
+      }
+      await row.get('[aria-label="Quantity"]').setValue(7);
+      await row.get('[aria-label="Notes"]').setValue('a note');
+    }
+    await wrapper.get('form.bulk-form').trigger('submit');
+    await flushPromises();
+    expect(itemsService.create).toHaveBeenCalledTimes(2);
+    for (const [payload] of itemsService.create.mock.calls) {
+      expect(pick(payload, SERVER_FIELDS[source])).toEqual(ADDED[source]);
+    }
+    expect(wrapper.find('form.bulk-form').exists()).toBe(false);
+  });
+
+  it('keeps only failed rows for retry without duplicating successful items', async () => {
+    const wrapper = mountWithHost(BulkItemFormModal, { categoryName: 'Screws', categories: CATEGORIES, boxes: BOXES });
+    await flushPromises();
+    await wrapper.get('[aria-label="Shared Storage Box"]').setValue('box-1');
+    itemsService.create.mockResolvedValueOnce({ data: {} }).mockRejectedValueOnce(new Error('Failed'));
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    expect(wrapper.findAll('tbody tr')).toHaveLength(1);
+    expect(wrapper.get('[role="alert"]').text()).toBe('Failed');
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    expect(itemsService.create).toHaveBeenCalledTimes(3);
+    expect(wrapper.getComponent(BulkItemFormModal).emitted('close')).toHaveLength(1);
+  });
+
+  it('duplicates and removes rows, preserves type drafts and cancels with Escape', async () => {
+    const wrapper = mountWithHost(ItemsView, { selectedCategory: 'c-screw' });
+    await flushPromises();
+    await wrapper.findAll('.search-bar button').find((button) => button.text().includes('Add Multiple')).trigger('click');
+    await flushPromises();
+    await wrapper.get('tbody [aria-label="Length"]').setValue('15');
+    await wrapper.get('[aria-label="Duplicate row 1"]').trigger('click');
+    expect(wrapper.findAll('.bulk-table tbody tr')).toHaveLength(3);
+    expect(wrapper.findAll('tbody [aria-label="Length"]')[2].element.value).toBe('15');
+    await wrapper.get('[aria-label="Remove row 2"]').trigger('click');
+    await wrapper.get('[aria-label="Item Type"]').setValue('Batteries');
+    await wrapper.get('[aria-label="Item Type"]').setValue('Screws');
+    expect(wrapper.findAll('tbody [aria-label="Length"]')[0].element.value).toBe('15');
+    expect(wrapper.findAll('.bulk-table tbody tr')).toHaveLength(2);
+    await wrapper.get('[aria-label="Item Type"]').trigger('keydown', { key: 'Escape' });
+    expect(wrapper.find('form.bulk-form').exists()).toBe(false);
+    expect(itemsService.create).not.toHaveBeenCalled();
+  });
+
+  it('requires a storage box and required fields before sending anything', async () => {
+    const wrapper = mountWithHost(BulkItemFormModal, { categoryName: 'RC Parts', categories: CATEGORIES, boxes: BOXES });
+    await flushPromises();
+    await wrapper.get('form').trigger('submit');
+    expect(itemsService.create).not.toHaveBeenCalled();
+    await wrapper.get('[aria-label="Shared Storage Box"]').setValue('box-1');
+    await wrapper.get('form').trigger('submit');
+    expect(itemsService.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('cancelling with Escape', () => {
+  it.each(['add', 'edit'])('closes the %s form without saving', async (mode) => {
+    itemsService.getAll.mockResolvedValue({ data: [ROWS.screw] });
+    const wrapper = mountWithHost(ItemsView, { selectedCategory: 'c-screw' });
+    await flushPromises();
+    await wrapper.get(mode === 'add' ? '.search-bar button' : 'tbody button[title="Edit"]').trigger('click');
+    await flushPromises();
+    await wrapper.get('form.modal-form input[type="text"]').setValue('25');
+
+    await wrapper.get('form.modal-form input[type="text"]').trigger('keydown', { key: 'ArrowRight' });
+    expect(wrapper.find('form.modal-form').exists()).toBe(true);
+    await wrapper.get('form.modal-form input[type="text"]').trigger('keydown', { key: 'Escape' });
+
+    expect(wrapper.find('form.modal-form').exists()).toBe(false);
+    expect(itemsService.create).not.toHaveBeenCalled();
+    expect(itemsService.update).not.toHaveBeenCalled();
+  });
 });
 
 describe('adding an item stores the same data as before', () => {

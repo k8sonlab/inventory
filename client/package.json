@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@lucide/vue": "^1.61.0",
     "axios": "^1.6.2",
     "vue": "^3.3.11",
     "vue-router": "^4.3.0"

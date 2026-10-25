@@ -1,6 +1,6 @@
 <template>
-  <div class="modal-overlay">
-    <div class="modal-box" role="dialog" aria-modal="true" :aria-label="title">
+  <div class="modal-overlay" @keydown.esc.stop.prevent="emit('close')">
+    <div class="modal-box" :class="{ 'modal-wide': wide }" role="dialog" aria-modal="true" :aria-label="title">
       <div class="modal-header">
         <h2>{{ title }}</h2>
         <button type="button" class="close-btn" aria-label="Close" @click="emit('close')">✕</button>
@@ -11,10 +11,23 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue';
+
 defineProps({
-  title: { type: String, required: true }
+  title: { type: String, required: true },
+  wide: { type: Boolean, default: false }
 });
 const emit = defineEmits(['close']);
+
+const handleKeydown = (event) => {
+  if (event.key === 'Escape' && !event.defaultPrevented) {
+    event.preventDefault();
+    emit('close');
+  }
+};
+
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 </script>
 
 <style scoped>
@@ -41,6 +54,10 @@ const emit = defineEmits(['close']);
   max-height: 90vh;
   overflow-y: auto;
   animation: slideIn 0.3s ease-out;
+}
+
+.modal-wide {
+  max-width: var(--modal-max-width, 1080px);
 }
 
 @keyframes slideIn {
