@@ -13,10 +13,20 @@
       <div class="manage-list">
         <div v-if="shelves.length === 0" class="empty-state">No shelves</div>
         <div v-for="shelf in shelves" :key="shelf.id" class="manage-item">
-          <div class="item-content">
+          <div v-if="editing?.kind === 'shelf' && editing.id === shelf.id" class="item-content edit-row">
+            <strong>{{ shelf.shelf_code }}</strong>
+            <input v-model="editing.location" placeholder="Location/Description" />
+            <input v-model="editing.notes" placeholder="Notes" />
+          </div>
+          <div v-else class="item-content">
             <strong>{{ shelf.shelf_code }}</strong>
             <small>{{ shelf.location }} {{ shelf.notes ? '(' + shelf.notes + ')' : '' }}</small>
           </div>
+          <template v-if="editing?.kind === 'shelf' && editing.id === shelf.id">
+            <button @click="saveEdit" class="btn-icon" title="Save" :aria-label="`Save shelf ${shelf.shelf_code}`">💾</button>
+            <button @click="editing = null" class="btn-icon" title="Cancel">✖️</button>
+          </template>
+          <button v-else @click="startEdit('shelf', shelf)" class="btn-icon" title="Edit" :aria-label="`Edit shelf ${shelf.shelf_code}`">✏️</button>
           <button @click="deleteShelf(shelf.id)" class="btn-icon" title="Delete" :aria-label="`Delete shelf ${shelf.shelf_code}`">🗑️</button>
         </div>
       </div>
@@ -49,10 +59,20 @@
       <div class="manage-list">
         <div v-if="filteredBoxes.length === 0" class="empty-state">No boxes</div>
         <div v-for="box in filteredBoxes" :key="box.id" class="manage-item">
-          <div class="item-content">
+          <div v-if="editing?.kind === 'box' && editing.id === box.id" class="item-content edit-row">
             <strong>{{ box.storage_id }}</strong>
-            <small>{{ box.box_name }} (Shelf: {{ box.shelf_code }})</small>
+            <input v-model="editing.box_name" placeholder="Box Name" />
+            <input v-model="editing.box_type" placeholder="Box Type / Description" />
           </div>
+          <div v-else class="item-content">
+            <strong>{{ box.storage_id }}</strong>
+            <small>{{ box.box_name }}{{ box.box_type ? ' - ' + box.box_type : '' }} (Shelf: {{ box.shelf_code }})</small>
+          </div>
+          <template v-if="editing?.kind === 'box' && editing.id === box.id">
+            <button @click="saveEdit" class="btn-icon" title="Save" :aria-label="`Save box ${box.storage_id}`">💾</button>
+            <button @click="editing = null" class="btn-icon" title="Cancel">✖️</button>
+          </template>
+          <button v-else @click="startEdit('box', box)" class="btn-icon" title="Edit" :aria-label="`Edit box ${box.storage_id}`">✏️</button>
           <button @click="deleteBox(box)" class="btn-icon" title="Delete" :aria-label="`Delete box ${box.storage_id || box.box_name}`">🗑️</button>
         </div>
       </div>
@@ -70,6 +90,31 @@ const boxes = ref([]);
 const filterShelfId = ref('');
 const newShelf = ref({ shelf_code: '', location: '', notes: '' });
 const newBox = ref({ shelf_id: '', storage_id: '', box_name: '', box_type: '' });
+const editing = ref(null);
+
+const startEdit = (kind, row) => {
+  editing.value = kind === 'shelf'
+    ? { kind, id: row.id, location: row.location || '', notes: row.notes || '' }
+    : { kind, id: row.id, box_name: row.box_name || '', box_type: row.box_type || '' };
+};
+
+const saveEdit = async () => {
+  const { kind, id, ...fields } = editing.value;
+  try {
+    if (kind === 'shelf') {
+      await locationsService.updateShelf(id, fields);
+      await loadShelves();
+    } else {
+      await locationsService.updateBox(id, fields);
+    }
+    // Boxes also display their shelf's location
+    await loadBoxes();
+    editing.value = null;
+  } catch (error) {
+    console.error('Error saving location:', error);
+    notifyError(errorMessage(error, `Could not save the ${kind}.`));
+  }
+};
 
 const filteredBoxes = computed(() => {
   if (!filterShelfId.value) return boxes.value;
@@ -329,6 +374,19 @@ onMounted(() => {
   color: #7f8c8d;
   font-size: 12px;
   margin-top: 4px;
+}
+
+.edit-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-row input {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
 }
 
 .btn-danger {

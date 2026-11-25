@@ -59,6 +59,12 @@ export const locationsService = {
   createBox(shelf_id, storage_id = null, box_name = '', box_type = '') {
     return api.post('/locations/boxes', { shelf_id, storage_id, box_name, box_type });
   },
+  updateShelf(id, { location, notes }) {
+    return api.put(`/locations/shelves/${id}`, { location, notes });
+  },
+  updateBox(id, { box_name, box_type }) {
+    return api.put(`/locations/boxes/${id}`, { box_name, box_type });
+  },
   deleteBox(id) {
     return api.delete(`/locations/boxes/${id}`);
   }

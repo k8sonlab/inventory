@@ -11,7 +11,8 @@ export const ENUMS = {
   oil_paste_company: ['Acme Oil'], oil_paste_type: ['Grease', 'Oil'],
   battery_size: ['AA', 'AAA'], battery_company: ['Duracell'], battery_model: ['Plus'], battery_type: ['Alkaline'],
   washer_bearing_subtype: ['Flat', 'Ball'], washer_bearing_material: ['Steel', 'Brass'],
-  rc_company: ['Traxxas'], rc_model: ['Slash']
+  rc_company: ['Traxxas'], rc_model: ['Slash'],
+  other_item_type: ['Cable', 'Connector']
 };
 
 export const BOXES = [{ id: 'box-1', storage_id: 'S1-B01', box_name: 'Box', shelf_code: 'S1' }];

@@ -136,7 +136,8 @@ export class Item {
 
 export class Category {
   static async getAll() {
-    return await query('SELECT * FROM categories ORDER BY sort_order, name');
+    // Other Items is the generic catch-all, so it always comes first
+    return await query(`SELECT * FROM categories ORDER BY CASE WHEN name = 'Other Items' THEN 0 ELSE 1 END, sort_order, name`);
   }
 
   static async create(name) {
@@ -189,6 +190,12 @@ export class Shelf {
     const sql = `SELECT * FROM shelves WHERE shelf_code = ${isPostgresDB() ? '$1' : '?'}`;
     return await queryOne(sql, [shelf_code]);
   }
+
+  static async update(id, { location = '', notes = '' }) {
+    const sql = `UPDATE shelves SET location = ${isPostgresDB() ? '$1' : '?'}, notes = ${isPostgresDB() ? '$2' : '?'} WHERE id = ${isPostgresDB() ? '$3' : '?'}`;
+    await exec(sql, [location, notes, id]);
+    return await Shelf.getById(id);
+  }
 }
 
 export class Box {
@@ -234,6 +241,12 @@ export class Box {
   static async getByStorageId(storage_id) {
     const sql = `SELECT * FROM boxes WHERE storage_id = ${isPostgresDB() ? '$1' : '?'}`;
     return await queryOne(sql, [storage_id]);
+  }
+
+  static async update(id, { box_name = '', box_type = '' }) {
+    const sql = `UPDATE boxes SET box_name = ${isPostgresDB() ? '$1' : '?'}, box_type = ${isPostgresDB() ? '$2' : '?'} WHERE id = ${isPostgresDB() ? '$3' : '?'}`;
+    await exec(sql, [box_name, box_type, id]);
+    return await queryOne(`SELECT b.*, s.shelf_code, s.location FROM boxes b LEFT JOIN shelves s ON b.shelf_id = s.id WHERE b.id = ${isPostgresDB() ? '$1' : '?'}`, [id]);
   }
 
   static async delete(id) {

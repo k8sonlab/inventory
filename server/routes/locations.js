@@ -24,6 +24,17 @@ router.post('/shelves', async (req, res) => {
   }
 });
 
+router.put('/shelves/:id', async (req, res) => {
+  try {
+    const { location, notes } = req.body;
+    const shelf = await Shelf.update(req.params.id, { location, notes });
+    if (!shelf) return res.status(404).json({ error: 'Shelf not found' });
+    res.json(shelf);
+  } catch (error) {
+    sendError(res, error, 400);
+  }
+});
+
 // Boxes
 router.get('/boxes', async (req, res) => {
   try {
@@ -48,6 +59,17 @@ router.post('/boxes', async (req, res) => {
     const { shelf_id, storage_id, box_name, box_type } = req.body;
     const box = await Box.create(shelf_id, storage_id, box_name, box_type);
     res.status(201).json(box);
+  } catch (error) {
+    sendError(res, error, 400);
+  }
+});
+
+router.put('/boxes/:id', async (req, res) => {
+  try {
+    const { box_name, box_type } = req.body;
+    const box = await Box.update(req.params.id, { box_name, box_type });
+    if (!box) return res.status(404).json({ error: 'Box not found' });
+    res.json(box);
   } catch (error) {
     sendError(res, error, 400);
   }
