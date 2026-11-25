@@ -36,7 +36,7 @@ describe('form types', () => {
   it('derives the option lists to load from the fields, so none can be forgotten', () => {
     expect(enumTypesOf(type('Batteries'))).toEqual(['battery_size', 'battery_company', 'battery_model', 'battery_type']);
     expect(enumTypesOf(type('Screws'))).toEqual(['screw_size', 'screw_head_type', 'screw_drive_type', 'screw_thread_type', 'screw_color', 'screw_material']);
-    expect(enumTypesOf(type('Other Items'))).toEqual([]);
+    expect(enumTypesOf(type('Other Items'))).toEqual(['other_item_type']);
     expect(enumTypesOf(type('Washers & Bearings'))).toEqual(['washer_bearing_subtype', 'washer_bearing_material']);
   });
 

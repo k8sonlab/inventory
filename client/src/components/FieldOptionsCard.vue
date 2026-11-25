@@ -1,13 +1,20 @@
 <template>
   <div class="manage-section" :class="`manage-section--${variant}`">
     <h2>{{ title }}</h2>
-    <div class="manage-form">
-      <select v-model="selectedField" :aria-label="`${subject} field`">
-        <option value="">-- Select {{ subject }} Field --</option>
-        <option v-for="field in fields" :key="field.value" :value="field.value">{{ field.label }}</option>
-      </select>
-      <input v-model="newValue" placeholder="New value" :aria-label="`New ${subject} value`" />
-      <button type="button" class="btn-primary" :disabled="!selectedField || !newValue.trim()" @click="addValue">Add Value</button>
+    <div class="choice-bar" role="group" :aria-label="`${subject} field`">
+      <button
+        v-for="field in fields"
+        :key="field.value"
+        type="button"
+        class="choice"
+        :class="{ active: selectedField === field.value }"
+        :aria-pressed="selectedField === field.value"
+        @click="selectedField = field.value"
+      >{{ field.label }}</button>
+    </div>
+    <div v-if="selectedField" class="manage-form">
+      <input v-model="newValue" placeholder="New value" :aria-label="`New ${subject} value`" @keyup.enter="addValue" />
+      <button type="button" class="btn-primary" :disabled="!newValue.trim()" @click="addValue">Add Value</button>
     </div>
     <div v-if="selectedField" class="manage-list">
       <div v-if="values.length === 0" class="empty-state">No values for this field</div>
@@ -77,6 +84,7 @@ const removeValue = async (value) => {
 
 watch(selectedField, () => {
   values.value = [];
+  newValue.value = '';
   loadValues();
 });
 </script>

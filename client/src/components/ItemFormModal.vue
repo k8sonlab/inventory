@@ -17,7 +17,7 @@
           </label>
           <template v-else>
             <label>{{ field.label }}{{ field.required ? ' *' : '' }}</label>
-            <select v-if="field.kind === 'select'" v-model="valuesFor(field)[field.key]">
+            <select v-if="field.kind === 'select'" v-model="valuesFor(field)[field.key]" :required="field.required">
               <option value="">-- Select {{ field.label }} --</option>
               <option v-for="value in enumOptions[field.enumType] || []" :key="value" :value="value">{{ value }}</option>
             </select>

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import ItemsView from '../src/views/ItemsView.vue';
-import { itemsService, categoriesService, locationsService } from '../src/services/api.js';
+import { itemsService, categoriesService, locationsService, enumsService } from '../src/services/api.js';
 
 vi.mock('../src/services/api.js', () => ({
   itemsService: { getAll: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn(), updateQuantity: vi.fn() },
@@ -41,6 +41,7 @@ beforeEach(() => {
   itemsService.update.mockResolvedValue({ data: otherItem });
   categoriesService.getAll.mockResolvedValue({ data: [{ id: 'cat-other', name: 'Other Items' }] });
   locationsService.getBoxes.mockResolvedValue({ data: [{ id: 'box-1', storage_id: 'T01-B06', box_name: 'Big Box' }] });
+  enumsService.getValues.mockResolvedValue({ data: ['Cable', 'Connector'] });
 });
 
 describe('editing an Other Item', () => {
@@ -48,8 +49,9 @@ describe('editing an Other Item', () => {
     const wrapper = await openEditor();
     expect(wrapper.get('.modal-form select').element.value).toBe('Other Items');
     const fields = wrapper.get('.other-items-fields');
+    expect(fields.get('select').element.value).toBe('Cable');
     const values = fields.findAll('input').map((input) => input.element.value);
-    expect(values).toEqual(['Cable', 'Micro Light Cable', '2m', 'Noctua']);
+    expect(values).toEqual(['Micro Light Cable', '2m', 'Noctua']);
   });
 
   it('saves to the Other Items record with its specific type preserved', async () => {

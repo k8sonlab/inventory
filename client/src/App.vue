@@ -14,7 +14,7 @@
           class="category-link"
           exact-active-class="active"
         >{{ cat.name }}</router-link>
-        <router-link :to="{ name: 'locations' }" exact-active-class="active">Manage Locations</router-link>
+        <router-link :to="{ name: 'locations' }" class="nav-admin" exact-active-class="active">Manage Locations</router-link>
         <router-link :to="{ name: 'manage' }" exact-active-class="active">Manage</router-link>
       </nav>
     </header>
@@ -107,6 +107,17 @@ header h1 {
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 0.5rem;
+}
+
+nav a.nav-admin {
+  margin-left: auto;
 }
 
 nav a {

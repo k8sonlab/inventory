@@ -1,8 +1,22 @@
 <template>
   <div class="manage-view">
-    <FieldOptionsCard v-for="group in FIELD_GROUPS" :key="group.variant" v-bind="group" />
+    <div class="choice-bar family-bar" role="group" aria-label="What to manage">
+      <button
+        v-for="tab in TABS"
+        :key="tab.variant"
+        type="button"
+        class="choice"
+        :class="{ active: selected === tab.variant }"
+        :aria-pressed="selected === tab.variant"
+        @click="selected = tab.variant"
+      >{{ tab.label }}</button>
+    </div>
 
-    <div class="manage-section">
+    <p v-if="!selected" class="empty-state">Choose what you want to manage.</p>
+
+    <FieldOptionsCard v-else-if="selectedGroup" :key="selectedGroup.variant" v-bind="selectedGroup" />
+
+    <div v-else class="manage-section">
       <h2>📂 Categories</h2>
       <div class="manage-form">
         <input v-model="newCategory" placeholder="Category name" aria-label="Category name" />
@@ -20,13 +34,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import FieldOptionsCard from '../components/FieldOptionsCard.vue';
 import { categoriesService } from '../services/api.js';
 import { confirmAction, errorMessage, notifyError } from '../composables/useNotifications.js';
 
 // One card per item family; `fields` are the catalog enum types shown in the item forms' dropdowns
 const FIELD_GROUPS = [
+  {
+    variant: 'other', title: '📦 Other Items Fields', subject: 'Other Item',
+    fields: [{ value: 'other_item_type', label: 'Item Type' }]
+  },
   {
     variant: 'rc', title: '🏎️ RC Parts Fields', subject: 'RC',
     fields: [
@@ -78,6 +96,14 @@ const FIELD_GROUPS = [
   }
 ];
 
+const TABS = [
+  ...FIELD_GROUPS.map(({ variant, title }) => ({ variant, label: title.replace(/ Fields$/, '') })),
+  { variant: 'categories', label: '📂 Categories' }
+];
+
+const selected = ref('');
+const selectedGroup = computed(() => FIELD_GROUPS.find((group) => group.variant === selected.value));
+
 const categories = ref([]);
 const newCategory = ref('');
 
@@ -120,9 +146,37 @@ onMounted(loadCategories);
 <style>
 /* Not scoped: the cards are rendered by FieldOptionsCard, so these rules are limited to the Manage page by prefix */
 .manage-view {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.manage-view .choice-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.manage-view .choice {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.manage-view .choice.active {
+  background: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+.manage-view .family-bar {
+  margin-bottom: 0;
 }
 
 .manage-view .manage-section {
@@ -226,10 +280,6 @@ onMounted(loadCategories);
 }
 
 @media (max-width: 768px) {
-  .manage-view {
-    grid-template-columns: 1fr;
-  }
-
   .manage-view .manage-form {
     gap: 0.5rem;
   }

@@ -363,9 +363,10 @@ async function importExcelData(filePath, { clean = false, empty = false } = {}) 
         const boxId = boxMap[row['Storage ID']];
         if (!boxId) continue;
         
-        // Import into the new other_items table with all fields
+        const itemType = row['Item Type'] || 'Other';
+        await CatalogEnum.create('other_item_type', itemType);
         await OtherItem.create({
-          item_type: row['Item Type'] || 'Other',
+          item_type: itemType,
           name: row['Name'] || '',
           size: row['Size'] || '',
           company: row['Company'] || '',

@@ -133,7 +133,7 @@ export const FORM_TYPES = [
     key: 'Other Items', label: '📦 Other Items', sourceType: 'other_item', cssClass: 'other-items-fields',
     belongsTo: (categoryName) => categoryName === 'Other Items',
     fields: [
-      text('other_item_type', 'Item Type', 'e.g., Connector, Washer, Switch, Resistor', { required: true }),
+      { ...select('other_item_type', 'Item Type', 'other_item_type'), required: true },
       text('other_item_name', 'Name', 'e.g., XT90 M, 6X2.5x05'),
       text('size', 'Size', 'e.g., Small, Medium, Large, 4mm'),
       text('other_item_company', 'Company', 'e.g., Noctua, No Name')

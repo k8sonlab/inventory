@@ -24,15 +24,15 @@ describe('ManageView', () => {
     const wrapper = mountWithHost(ManageView);
     await flushPromises();
     expect(wrapper.text()).not.toContain('Parameter Options');
-    expect(wrapper.html()).not.toContain('other_item_type');
   });
 
   it('manages Oil/Paste company and type options', async () => {
     const wrapper = mountWithHost(ManageView);
     await flushPromises();
+    await wrapper.findAll('.family-bar button').find((b) => b.text().includes('Oil/Paste')).trigger('click');
     const card = wrapper.get('.manage-section--oil');
-    expect(card.findAll('option').map((option) => option.attributes('value'))).toEqual(['', 'oil_paste_company', 'oil_paste_type']);
-    await card.get('select').setValue('oil_paste_company');
+    expect(card.findAll('.choice').map((b) => b.text())).toEqual(['Company', 'Type']);
+    await card.findAll('.choice')[0].trigger('click');
     await flushPromises();
     expect(enumsService.getValues).toHaveBeenCalledWith('oil_paste_company');
     expect(card.text()).toContain('Acme Oil');
