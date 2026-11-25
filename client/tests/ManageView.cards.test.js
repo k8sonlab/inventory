@@ -45,7 +45,7 @@ describe('ManageView field cards', () => {
     const wrapper = mountWithHost(ManageView);
     await flushPromises();
     expect(wrapper.findAll('.family-bar button').map((b) => b.text())).toEqual([
-      '📦 Other Items', '🏎️ RC Parts', '🔩 Screw', '⚙️ Nut', '⚪ Washers & Bearings', '🔋 Battery', '🛢️ Oil/Paste',
+      '📦 Other Items', '🔌 Cable', '🏎️ RC Parts', '🔩 Screw', '⚙️ Nut', '⚪ Washers & Bearings', '🔋 Battery', '🛢️ Oil/Paste',
       '📂 Categories'
     ]);
     expect(wrapper.find('.manage-section').exists()).toBe(false);

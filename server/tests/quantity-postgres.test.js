@@ -24,7 +24,7 @@ test('PostgreSQL schema migrates floating quantities to integers and models roun
 
   await runMigrations();
   const tables = ['items', 'rc_parts', 'screws', 'nuts', 'bearings',
-    'washers_bearings', 'oil_pastes', 'batteries', 'other_items'];
+    'washers_bearings', 'oil_pastes', 'batteries', 'other_items', 'cables'];
   for (const table of tables) {
     const create = statements.find(sql => sql.includes(`CREATE TABLE IF NOT EXISTS ${table} (`));
     assert.match(create, /quantity INTEGER DEFAULT 0/);

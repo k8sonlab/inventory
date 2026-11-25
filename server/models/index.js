@@ -21,7 +21,8 @@ const quantityTables = {
   washer_bearing: 'washers_bearings',
   oil_paste: 'oil_pastes',
   battery: 'batteries',
-  other_item: 'other_items'
+  other_item: 'other_items',
+  cable: 'cables'
 };
 
 export function isQuantitySourceType(sourceType) {
@@ -387,6 +388,7 @@ export class RCPart {
     const oilPastes = await OilPaste.getAll(filters);
     const batteries = await Battery.getAll(filters);
     const otherItems = await OtherItem.getAll(filters);
+    const cables = await Cable.getAll(filters);
     
     debugLog(`[getAllCombined] items=${items.length}, rcParts=${rcParts.length}, screws=${screws.length}, nuts=${nuts.length}, washersBearings=${washersBearings.length}, bearings=${bearings.length}, oilPastes=${oilPastes.length}, batteries=${batteries.length}, otherItems=${otherItems.length}`);
     
@@ -479,6 +481,15 @@ export class RCPart {
         display_model: oi.size,
         display_code: null,
         item_type: oi.item_type
+      })),
+      ...cables.map(c => ({
+        ...c,
+        source_type: 'cable',
+        display_name: c.name,
+        display_company: c.company,
+        display_model: null,
+        display_code: null,
+        item_type: 'Cables'
       }))
     ];
     
@@ -1046,6 +1057,81 @@ export class OtherItem {
   static async delete(id) {
     const sql = `DELETE FROM other_items WHERE id = ${isPostgresDB() ? '$1' : '?'}`;
     await exec(sql, [id]);
+    return { success: true };
+  }
+}
+
+export class Cable {
+  static FIELDS = ['name', 'cable_type', 'end_a', 'end_b', 'length', 'gauge', 'color', 'company'];
+
+  static async getAll(filters = {}) {
+    let sql = `
+      SELECT c.*, b.box_name, b.storage_id, sh.location, 'cable' as source_type
+      FROM cables c
+      LEFT JOIN boxes b ON c.box_id = b.id
+      LEFT JOIN shelves sh ON b.shelf_id = sh.id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramCount = 1;
+    const ph = () => isPostgresDB() ? `$${paramCount++}` : '?';
+    const likeOp = isPostgresDB() ? 'ILIKE' : 'LIKE';
+
+    if (filters.category_id && filters.category_id !== '') {
+      sql += ` AND c.category_id = ${ph()}`;
+      params.push(filters.category_id);
+    }
+    if (filters.box_id) {
+      sql += ` AND c.box_id = ${ph()}`;
+      params.push(filters.box_id);
+    }
+    if (filters.search) {
+      const columns = [...Cable.FIELDS.map((field) => `c.${field}`), 'b.storage_id', 'c.notes'];
+      sql += ` AND (${columns.map((column) => `${column} ${likeOp} ${ph()}`).join(' OR ')})`;
+      columns.forEach(() => params.push(`%${filters.search}%`));
+    }
+
+    sql += ` ORDER BY c.cable_type, c.end_a, c.end_b, c.length`;
+    return await query(sql, params);
+  }
+
+  static async getById(id) {
+    const sql = `SELECT c.*, b.box_name, b.storage_id, sh.location, 'cable' as source_type
+       FROM cables c
+       LEFT JOIN boxes b ON c.box_id = b.id
+       LEFT JOIN shelves sh ON b.shelf_id = sh.id
+       WHERE c.id = ${isPostgresDB() ? '$1' : '?'}`;
+    return await queryOne(sql, [id]);
+  }
+
+  static values(data) {
+    return [
+      ...Cable.FIELDS.map((field) => data[field] || null),
+      data.box_id || null, data.category_id || null, integerQuantity(data.quantity ?? 0), data.notes || null
+    ];
+  }
+
+  static async create(data) {
+    const id = uuidv4();
+    const columns = ['id', ...Cable.FIELDS, 'box_id', 'category_id', 'quantity', 'notes'];
+    const placeholders = columns.map((_, i) => isPostgresDB() ? `$${i + 1}` : '?').join(', ');
+    await exec(
+      `INSERT INTO cables (${columns.join(', ')}, created_at, updated_at) VALUES (${placeholders}, ${NOW()}, ${NOW()})`,
+      [id, ...Cable.values(data)]
+    );
+    return await Cable.getById(id);
+  }
+
+  static async update(id, data) {
+    const columns = [...Cable.FIELDS, 'box_id', 'category_id', 'quantity', 'notes'];
+    const assignments = columns.map((column, i) => `${column} = ${isPostgresDB() ? `$${i + 1}` : '?'}`).join(', ');
+    const idPlaceholder = isPostgresDB() ? `$${columns.length + 1}` : '?';
+    await exec(`UPDATE cables SET ${assignments}, updated_at = ${NOW()} WHERE id = ${idPlaceholder}`, [...Cable.values(data), id]);
+    return await Cable.getById(id);
+  }
+
+  static async delete(id) {
+    await exec(`DELETE FROM cables WHERE id = ${isPostgresDB() ? '$1' : '?'}`, [id]);
     return { success: true };
   }
 }

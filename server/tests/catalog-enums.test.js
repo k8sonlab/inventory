@@ -11,7 +11,7 @@ import XLSX from 'xlsx';
 const run = promisify(execFile);
 const serverDirectory = fileURLToPath(new URL('..', import.meta.url));
 
-test('migration removes the unused Other Item type options only, and the importer no longer recreates them', async (t) => {
+test('migrations keep the Other Item type options, which back the Item Type dropdown', async (t) => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'inventory-enums-'));
   t.after(() => rm(directory, { recursive: true }));
   const file = path.join(directory, 'fixture.xlsx');
@@ -50,8 +50,8 @@ test('migration removes the unused Other Item type options only, and the importe
   `;
   const { stdout } = await run(process.execPath, ['--input-type=module', '-e', script], { cwd: serverDirectory, env });
   const result = JSON.parse(stdout.trim().split('\n').pop());
-  assert.equal(result.before, 1, 'importer must not create other_item_type rows');
-  assert.equal(result.other, 0, 'migration removes legacy other_item_type rows (idempotently)');
+  assert.equal(result.before, 1);
+  assert.equal(result.other, 1, 'migrations must not delete other_item_type rows');
   assert.equal(result.company, 1);
   assert.equal(result.type, 1);
 });

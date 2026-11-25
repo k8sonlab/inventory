@@ -147,6 +147,23 @@ export const FORM_TYPES = [
       item_type: fields.other_item_type || 'Unknown', name: fields.other_item_name || '',
       size: fields.size || '', company: fields.other_item_company || ''
     })
+  },
+  {
+    key: 'Cables', label: '🔌 Cables', sourceType: 'cable', cssClass: 'cable-fields',
+    belongsTo: (categoryName) => categoryName === 'Cables',
+    fields: [
+      { ...select('cable_type', 'Cable Type', 'cable_type'), required: true },
+      select('end_a', 'End A', 'cable_end'), select('end_b', 'End B', 'cable_end'),
+      text('length', 'Length', 'e.g., 1m, 15cm'), select('gauge', 'Gauge', 'cable_gauge'),
+      select('color', 'Color', 'cable_color'), select('company', 'Company', 'cable_company'),
+      text('name', 'Name', 'Optional, e.g., TB4, CS100', { target: 'common' })
+    ],
+    blank: () => ({ cable_type: '', end_a: '', end_b: '', length: '', gauge: '', color: '', company: '' }),
+    fromItem: (item) => orEmpty(item, 'cable_type', 'end_a', 'end_b', 'length', 'gauge', 'color', 'company'),
+    toPayload: (fields, common) => ({
+      ...orEmpty(fields, 'cable_type', 'end_a', 'end_b', 'length', 'gauge', 'color', 'company'),
+      name: common.name || ''
+    })
   }
 ];
 

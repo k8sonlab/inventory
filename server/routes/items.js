@@ -1,5 +1,5 @@
 import express from 'express';
-import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem, WasherBearing, isQuantitySourceType, updateItemQuantity } from '../models/index.js';
+import { Item, RCPart, Screw, Nut, Bearing, OilPaste, Battery, OtherItem, Cable, WasherBearing, isQuantitySourceType, updateItemQuantity } from '../models/index.js';
 import { sendError } from '../utils/httpErrors.js';
 
 const router = express.Router();
@@ -57,6 +57,8 @@ router.post('/', validateQuantity, async (req, res) => {
       item = await Battery.create(req.body);
     } else if (req.body.source_type === 'other_item' || req.body.item_type === 'Other Items') {
       item = await OtherItem.create(req.body);
+    } else if (req.body.source_type === 'cable' || req.body.item_type === 'Cables') {
+      item = await Cable.create(req.body);
     } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
       item = await RCPart.create(req.body);
     } else {
@@ -108,6 +110,8 @@ router.put('/:id', validateQuantity, async (req, res) => {
       item = await Battery.update(req.params.id, req.body);
     } else if (req.body.source_type === 'other_item' || req.body.item_type === 'Other Items') {
       item = await OtherItem.update(req.params.id, req.body);
+    } else if (req.body.source_type === 'cable' || req.body.item_type === 'Cables') {
+      item = await Cable.update(req.params.id, req.body);
     } else if (req.body.source_type === 'rc_part' || req.body.item_type === 'RC Parts') {
       item = await RCPart.update(req.params.id, req.body);
     } else {
@@ -141,6 +145,8 @@ router.delete('/:id', async (req, res) => {
       item = await Battery.delete(req.params.id);
     } else if (target.source_type === 'other_item' || target.item_type === 'Other Items') {
       item = await OtherItem.delete(req.params.id);
+    } else if (target.source_type === 'cable' || target.item_type === 'Cables') {
+      item = await Cable.delete(req.params.id);
     } else if (target.source_type === 'rc_part' || target.item_type === 'RC Parts') {
       item = await RCPart.delete(req.params.id);
     } else {

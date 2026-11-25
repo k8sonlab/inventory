@@ -13,6 +13,7 @@ describe('resolveTableKind', () => {
     expect(resolve('Oils/Pastes')).toBe('oils');
     expect(resolve('Batteries')).toBe('batteries');
     expect(resolve('Other Items')).toBe('other');
+    expect(resolve('Cables')).toBe('cables');
     expect(resolve('Washers & Bearings')).toBe('washers');
     expect(resolve('Bearings')).toBe('bearings');
     expect(resolve('RC Parts')).toBe('rc');

@@ -20,7 +20,7 @@ test('clear modes cover every table, respect foreign keys and roll back failed c
   const db = getDatabase();
   db.exec('PRAGMA foreign_keys = ON');
   const tables = ['items', 'rc_parts', 'screws', 'nuts', 'bearings', 'washers_bearings',
-    'oil_pastes', 'batteries', 'other_items', 'boxes', 'shelves', 'categories', 'catalog_enums'];
+    'oil_pastes', 'batteries', 'other_items', 'cables', 'boxes', 'shelves', 'categories', 'catalog_enums'];
   const seed = () => {
     db.exec(`
       INSERT INTO shelves (id, shelf_code, location) VALUES ('s', 'S1', 'Test');
@@ -31,7 +31,7 @@ test('clear modes cover every table, respect foreign keys and roll back failed c
       INSERT INTO rc_parts (id, item_code, box_id, category_id) VALUES ('r', 'Test', 'b', 'c');
       INSERT INTO washers_bearings (id, category, name, box_id, category_id) VALUES ('w', 'Washer', 'Test', 'b', 'c');
     `);
-    for (const table of ['screws', 'nuts', 'bearings', 'oil_pastes', 'batteries', 'other_items']) {
+    for (const table of ['screws', 'nuts', 'bearings', 'oil_pastes', 'batteries', 'other_items', 'cables']) {
       db.exec(`INSERT INTO ${table} (id, box_id, category_id) VALUES ('${table}', 'b', 'c')`);
     }
   };

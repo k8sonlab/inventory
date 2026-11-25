@@ -13,8 +13,19 @@ const build = (key, fields, common = {}, categories = CATEGORIES) =>
   buildPayload(type(key), { common: { ...blankCommon(), name: 'Thing', box_id: 'b1', quantity: 3, notes: 'n', ...common }, fields }, categories);
 
 describe('form types', () => {
-  it('offers the seven kinds of item in the original order', () => {
-    expect(FORM_TYPES.map((t) => t.key)).toEqual(['Screws', 'Nuts', 'Washers & Bearings', 'RC Parts', 'Oils/Pastes', 'Batteries', 'Other Items']);
+  it('offers the eight kinds of item in order', () => {
+    expect(FORM_TYPES.map((t) => t.key)).toEqual(['Screws', 'Nuts', 'Washers & Bearings', 'RC Parts', 'Oils/Pastes', 'Batteries', 'Other Items', 'Cables']);
+  });
+
+  it('builds a cable payload, keeping the name optional', () => {
+    const cable = FORM_TYPES.find((t) => t.key === 'Cables');
+    const fields = { ...cable.blank(), cable_type: 'USB/Data', end_a: 'USB-C', end_b: 'Micro-B', length: '1m' };
+    expect(cable.toPayload(fields, { name: '' })).toEqual({
+      cable_type: 'USB/Data', end_a: 'USB-C', end_b: 'Micro-B', length: '1m', gauge: '', color: '', company: '', name: ''
+    });
+    expect(cable.toPayload(fields, { name: 'TB4' }).name).toBe('TB4');
+    expect(cable.fromItem({ cable_type: 'Power Wire', gauge: '12AWG', color: null })).toMatchObject({ cable_type: 'Power Wire', gauge: '12AWG', color: '' });
+    expect(enumTypesOf(cable)).toEqual(['cable_type', 'cable_end', 'cable_end', 'cable_gauge', 'cable_color', 'cable_company']);
   });
 
   it('finds a form by key and by the kind of item it describes', () => {

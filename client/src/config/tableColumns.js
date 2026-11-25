@@ -61,6 +61,13 @@ const OTHER_ITEM_COLUMNS = [
   stringColumn('size', 'Size'), stringColumn('company', 'Company')
 ];
 
+const CABLE_COLUMNS = [
+  stringColumn('cable_type', 'Type'), stringColumn('end_a', 'End A'), stringColumn('end_b', 'End B'),
+  stringColumn('length', 'Length'), stringColumn('gauge', 'Gauge'), stringColumn('color', 'Color'),
+  { key: 'name', label: 'Name', cellClass: 'name', value: text('name'), sort: lower('name') },
+  stringColumn('company', 'Company')
+];
+
 const WASHER_BEARING_COLUMNS = [
   stringColumn('category', 'Type'),
   { key: 'name', label: 'Name', cellClass: 'name', value: text('name'), sort: lowerOf((item) => item.display_name || item.name) },
@@ -101,6 +108,7 @@ export const TABLE_KINDS = [
   { id: 'oils', source: 'oil_paste', matches: includesAny('oil', 'paste'), columns: OIL_PASTE_COLUMNS, defaultSort: 'company' },
   { id: 'batteries', source: 'battery', matches: includesAny('batter'), columns: BATTERY_COLUMNS, defaultSort: 'size' },
   { id: 'other', source: 'other_item', matches: includesAny('other'), columns: OTHER_ITEM_COLUMNS, defaultSort: 'item_type' },
+  { id: 'cables', source: 'cable', matches: includesAny('cable'), columns: CABLE_COLUMNS, defaultSort: 'cable_type' },
   { id: 'washers', source: 'washer_bearing', matches: (name) => name === 'Washers & Bearings', columns: WASHER_BEARING_COLUMNS, defaultSort: 'category' },
   { id: 'rc', source: 'rc_part', matches: (name) => name === 'RC Parts', columns: RC_PART_COLUMNS, defaultSort: 'company' }
 ];

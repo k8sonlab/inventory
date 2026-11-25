@@ -189,7 +189,7 @@ export async function execMultiple(statements) {
 export async function clearApplicationData({ preserveLocations = false } = {}) {
   const tables = [
     'items', 'rc_parts', 'screws', 'nuts', 'bearings', 'washers_bearings',
-    'oil_pastes', 'batteries', 'other_items', 'boxes', 'shelves',
+    'oil_pastes', 'batteries', 'other_items', 'cables', 'boxes', 'shelves',
     'categories', 'catalog_enums'
   ].filter(table => !preserveLocations || (table !== 'boxes' && table !== 'shelves'));
   const database = getDatabase();

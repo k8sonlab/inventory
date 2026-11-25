@@ -46,6 +46,16 @@ const FIELD_GROUPS = [
     fields: [{ value: 'other_item_type', label: 'Item Type' }]
   },
   {
+    variant: 'cable', title: '🔌 Cable Fields', subject: 'Cable',
+    fields: [
+      { value: 'cable_type', label: 'Type' },
+      { value: 'cable_end', label: 'Ends' },
+      { value: 'cable_gauge', label: 'Gauge' },
+      { value: 'cable_color', label: 'Color' },
+      { value: 'cable_company', label: 'Company' }
+    ]
+  },
+  {
     variant: 'rc', title: '🏎️ RC Parts Fields', subject: 'RC',
     fields: [
       { value: 'rc_company', label: 'RC Company' },

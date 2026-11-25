@@ -35,7 +35,7 @@ const { default: itemRoutes } = await import('../routes/items.js');
 const tables = {
   item: 'items', rc_part: 'rc_parts', screw: 'screws', nut: 'nuts',
   bearing: 'bearings', washer_bearing: 'washers_bearings', oil_paste: 'oil_pastes',
-  battery: 'batteries', other_item: 'other_items'
+  battery: 'batteries', other_item: 'other_items', cable: 'cables'
 };
 const id = randomUUID();
 const categoryId = randomUUID();

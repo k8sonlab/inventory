@@ -16,7 +16,7 @@ const { default: itemRoutes } = await import('../routes/items.js');
 
 const TABLES = {
   screw: 'screws', nut: 'nuts', bearing: 'bearings', washer_bearing: 'washers_bearings',
-  oil_paste: 'oil_pastes', battery: 'batteries', other_item: 'other_items', rc_part: 'rc_parts'
+  oil_paste: 'oil_pastes', battery: 'batteries', other_item: 'other_items', rc_part: 'rc_parts', cable: 'cables'
 };
 
 let server;

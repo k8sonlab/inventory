@@ -187,7 +187,7 @@ async function importExcelData(filePath, { clean = false, empty = false } = {}) 
 
     // 5. Create Categories
     console.log('\n📂 Creating Item Categories...');
-    const categories = ['Screws', 'Nuts', 'Other Items', 'RC Parts', 'Oils/Pastes', 'Batteries', 'Washers & Bearings'];
+    const categories = ['Screws', 'Nuts', 'Other Items', 'Cables', 'RC Parts', 'Oils/Pastes', 'Batteries', 'Washers & Bearings'];
     const categoryMap = {};
     
     for (const catName of categories) {

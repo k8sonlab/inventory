@@ -1,4 +1,5 @@
-import { initializeDatabase, isPostgresDB, closeDatabase, query, exec, execMultiple, getDatabase } from '../db.js';
+import { initializeDatabase, isPostgresDB, closeDatabase, query, queryOne, exec, execMultiple, getDatabase } from '../db.js';
+import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -203,6 +204,24 @@ async function runMigrations() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
+
+        `CREATE TABLE IF NOT EXISTS cables (
+          id UUID PRIMARY KEY,
+          name VARCHAR(255),
+          cable_type VARCHAR(255),
+          end_a VARCHAR(255),
+          end_b VARCHAR(255),
+          length VARCHAR(255),
+          gauge VARCHAR(255),
+          color VARCHAR(255),
+          company VARCHAR(255),
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id UUID REFERENCES boxes(id),
+          category_id UUID REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
         
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
@@ -252,7 +271,7 @@ async function runMigrations() {
             FROM information_schema.columns
             WHERE table_schema = current_schema()
               AND table_name IN ('items', 'rc_parts', 'screws', 'nuts', 'bearings',
-                                 'washers_bearings', 'oil_pastes', 'batteries', 'other_items')
+                                 'washers_bearings', 'oil_pastes', 'batteries', 'other_items', 'cables')
               AND column_name = 'quantity'
               AND data_type IN ('smallint', 'bigint', 'real', 'double precision', 'numeric')
           LOOP
@@ -438,6 +457,24 @@ async function runMigrations() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        `CREATE TABLE IF NOT EXISTS cables (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          cable_type TEXT,
+          end_a TEXT,
+          end_b TEXT,
+          length TEXT,
+          gauge TEXT,
+          color TEXT,
+          company TEXT,
+          quantity INTEGER DEFAULT 0,
+          notes TEXT,
+          box_id TEXT REFERENCES boxes(id),
+          category_id TEXT REFERENCES categories(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+
         `CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_box ON items(box_id)`,
         `CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)`,
@@ -475,12 +512,22 @@ async function runMigrations() {
       await execMultiple(statements);
       await execMultiple([
         'items', 'rc_parts', 'screws', 'nuts', 'bearings', 'washers_bearings',
-        'oil_pastes', 'batteries', 'other_items'
+        'oil_pastes', 'batteries', 'other_items', 'cables'
       ].map(table => `UPDATE ${table} SET quantity = CAST(quantity AS INTEGER) - CASE WHEN quantity < 0 THEN 1 ELSE 0 END WHERE quantity != CAST(quantity AS INTEGER)`));
     }
 
-    // Remove option lists that no UI reads (Other Items type is free text). Also ignored by the importer.
-    await exec(`DELETE FROM catalog_enums WHERE enum_type = ${isPostgresDB() ? '$1' : '?'}`, ['other_item_type']);
+    for (const statement of [
+      `CREATE INDEX IF NOT EXISTS idx_cables_box ON cables(box_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_cables_type ON cables(cable_type)`,
+      `CREATE INDEX IF NOT EXISTS idx_cables_category ON cables(category_id)`
+    ]) {
+      await exec(statement);
+    }
+
+    // Cables has no Excel sheet, so its category is created here rather than by the importer
+    if (!(await queryOne(`SELECT id FROM categories WHERE name = ${isPostgresDB() ? '$1' : '?'}`, ['Cables']))) {
+      await exec(`INSERT INTO categories (id, name) VALUES (${isPostgresDB() ? '$1, $2' : '?, ?'})`, [randomUUID(), 'Cables']);
+    }
 
     // Clean up legacy Bearings category and old bearing items
     try {
