@@ -1,5 +1,5 @@
 # Inventory App
-
+ 
 A full-stack inventory management application with Node.js backend, PostgreSQL database, and Vue.js frontend. Built to manage your hobby parts collection with multiple item types (screws, nuts, bearings, RC parts, etc.) organized across shelves and boxes.
 
 **🎯 Dual Database Support:** Use **SQLite** (local, zero setup) or **PostgreSQL** (production/K8s). Choose via `DB_TYPE` environment variable!
